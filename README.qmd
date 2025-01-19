@@ -20,7 +20,7 @@ More discussion here: https://github.com/durraniu/shiny-meetings/discussions/3#d
 **Start date: 2025-01-20**
 
 - Day 1 and 2:
-  - [ ] Initial wireframing. You may use AI tools such as [shiny assistant](https://gallery.shinyapps.io/assistant/#) or [ploomber AI editor](https://editor.ploomber.io/)
+  - [ ] Initial wireframing. You may use AI tools such as [tldraw](https://www.tldraw.com/), [shiny assistant](https://gallery.shinyapps.io/assistant/#) or [ploomber AI editor](https://editor.ploomber.io/)
   - Framework to use:
     - [ ] shiny only
     - [ ] [golem](https://github.com/ThinkR-open/golem)
