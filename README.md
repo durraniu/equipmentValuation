@@ -33,3 +33,10 @@ https://github.com/durraniu/shiny-meetings/discussions/3#discussioncomment-11872
   - [ ] Second meeting for discussing deployment
 - Day 15 or before:
   - [ ] Deployment
+ 
+## How to Contribute
+1. Fork this repository
+2. Create a new branch for your feature
+3. Make your changes
+4. Submit a pull request
+5. Wait for review and address any feedback
