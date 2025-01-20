@@ -5,6 +5,15 @@ format: gfm
 
 ## Project Description
 
+This tool will be a shiny-based application designed for heavy civil contractors, civil engineers, and anyone with equipment heavy asset lists to quickly determine fair market values of construction equipment.  By incorporating auction data and listings, it will provide a streamlined way to plan bidding strategies and set accurate reserve prices.  Users can upload or enter data, analyze it through tables and plots, and then save the data for future reference.   Starting with a tool designed for single-machine valuations, the goal is to expand it into a framework capable of handling an entire fleet or collection of equipment.  The new design will take the exting tool and expande it in two main ways:
+
+  1. A summary tab/page that will contain an overview of the entire collection, including totals and summary statistics, including but not limited too:
+    - Total fleet value
+    - Average date of data collected on the fleet
+    - Grouping summaries by catagory of equipment
+  2. A detailed tab/page that will contain the equivalent of the existing tool for each machine.  With a side bar that will allow the user to navigate between machines in the fleet, as well as add and removew machines.
+
+This project is a learning sandbox and should be a useful tool for anyone interested in SHiny development to see the processes from concept to deployment.
 
 ### Required Features
 
