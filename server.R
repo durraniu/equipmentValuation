@@ -78,7 +78,8 @@ function(input, output, session) {
 
       if (!is.null(Hist_Table)) {
         # Create and configure the Handsontable
-        rhandsontable(Hist_Table, stretchH = "all", overflow = "visible") %>%
+        #rhandsontable(Hist_Table, stretchH = "all", overflow = "visible") %>%
+        rhandsontable(Hist_Table, stretchH = "all") %>%
           hot_col(col = "Include", type = 'checkbox', halign = "htCenter") %>%
           hot_col(col = "year", format = "0", halign = "htCenter") %>%
           hot_col(col = "hours", format = "0") %>%
@@ -358,7 +359,7 @@ function(input, output, session) {
 
     })
 
-    ##---- 9) MAIN ANALYSIS OUTPUT (ex1) ----
+    ##---- 9) FORMULA OUTPUT (ex1) and VALUE BOX OUTPUT ----
 
     output$TitleCard <- renderText({
       paste0("Unit ", input$lot, " - ", input$description)
