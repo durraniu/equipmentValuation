@@ -52,6 +52,6 @@ master_list <- NULL
 
 master_list <- load_old_data(master_list)
 
-# Print results
-master_list$Market_Hist$DX800
-master_list$Market_Hist$`773B`
+
+# Save the master_list
+save(master_list, file = "master_list.RData")
