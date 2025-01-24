@@ -1,7 +1,6 @@
 
 library(tidyverse)
 
-
 load_old_data <- function(master_list) {
 
   # Load the file
@@ -48,8 +47,7 @@ load_old_data <- function(master_list) {
 # Initialize master_list
 master_list <- NULL
 
-# Call function iteratively
-
+# Call function
 master_list <- load_old_data(master_list)
 
 
