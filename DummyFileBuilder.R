@@ -1,7 +1,9 @@
 
 library(tidyverse)
 
-load_old_data <- function(master_list) {
+## Function to build Dummy Dataset ----
+## form a folder that contains some number of Rdata files
+load_old_data <- function(master_list, categories) {
 
   # Load the file
   #datapath <- file.choose()
@@ -18,6 +20,12 @@ load_old_data <- function(master_list) {
 
     load(paste0(datapath,"\\",i))  # This loads variables into the current environment
 
+    lot_cat <- floor(inpput_values$lot / 1000) * 1000 
+    
+    categorie_to_use <- categories %>%
+      filter(Category == lot_cat) %>%
+      pull(Description)
+    
     # Define new equipment data
     unit_data <- list(
       unit = inpput_values$lot,
@@ -27,7 +35,8 @@ load_old_data <- function(master_list) {
       model = inpput_values$model,
       valuationType = inpput_values$valuationType,
       condition = inpput_values$condition,
-      valuation = inpput_values$valuation
+      valuation = inpput_values$valuation,
+      categorie = categorie_to_use
     )
 
 
@@ -44,12 +53,24 @@ load_old_data <- function(master_list) {
   return(master_list)
 }
 
+## open EMCM.Rds from a different project ----
+file <- choose.files()
+categories <- readRDS(file)
+
+categories <- categories %>%
+  select(Category, Description)
+
+## Make the Dummy Dataset ----
 # Initialize master_list
 master_list <- NULL
 
 # Call function
-master_list <- load_old_data(master_list)
+master_list <- load_old_data(master_list, categories)
 
-
-# Save the master_list
+## Save the Dummy Dataset ----
 save(master_list, file = "master_list.RData")
+
+
+
+
+
