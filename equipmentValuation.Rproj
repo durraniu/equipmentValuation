@@ -1,5 +1,5 @@
 Version: 1.0
-ProjectId: bdfa8d1b-412d-4c7a-a833-f55daad97884
+ProjectId: 4939aa8f-14ed-4c87-b34d-570d8fdfa8b8
 
 RestoreWorkspace: Default
 SaveWorkspace: Default
@@ -11,7 +11,4 @@ NumSpacesForTab: 2
 Encoding: UTF-8
 
 RnwWeave: Sweave
-LaTeX: pdfLaTeX
-
-AutoAppendNewline: Yes
-StripTrailingWhitespace: Yes
+LaTeX: XeLaTeX
