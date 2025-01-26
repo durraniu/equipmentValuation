@@ -45,7 +45,8 @@ details_panel <- nav_panel(
   title = "Details",
   div(
     style = "overflow-x: auto; white-space: nowrap;",
-    rHandsontableOutput("HistTable", width = "100%")
+    rHandsontableOutput("HistTable", width = "100%"),
+    uiOutput('ex1')
   )
 )
 
