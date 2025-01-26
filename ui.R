@@ -11,7 +11,7 @@ sidebar <- sidebar(
   accordion(
     accordion_panel(
       title = "Equipment Details",
-      numericInput("lot", "Lot or Unit Number", value = 0),
+      selectInput("unites", "Unite Number", choices = NULL),    # Dropdown for units
       textInput("description", "Description"),
       textInput("model", "Model"),
       numericInput("year", "Year", value = 0),
@@ -19,9 +19,9 @@ sidebar <- sidebar(
     ),
     accordion_panel(
       title = "Valuation Type & Equipment Condition",
-      selectInput("valuationType", "Valuation Type", 
+      selectInput("valuationType", "Valuation Type",
                   choices = c("Auction", "Retail")),
-      selectInput("condition", "Equipment Condition", 
+      selectInput("condition", "Equipment Condition",
                   choices = conditions_Defaults)
     )
   )
@@ -45,6 +45,7 @@ details_panel <- nav_panel(
   title = "Details",
   div(
     style = "overflow-x: auto; white-space: nowrap;",
+    uiOutput("dynamicCheckbox"),      # Dynamic checkbox (server-side)
     rHandsontableOutput("HistTable", width = "100%"),
     uiOutput('ex1')
   )
