@@ -4,17 +4,34 @@ library(shiny)
 function(input, output, session) {
 
     # Store reactive values (data, etc.) across user sessions
-    vals <- reactiveValues(data = NULL)
+    vals <- reactiveValues(data = NULL,
+                           master_list = NULL)
 
     ##---- 1) REACTIVE EXPRESSION: LOADING / PREPARING DATA ----
 
-    Hist_Table <- reactive({
+    observeEvent(input$file1, {
+      req(input$file1)
 
-      inFile = input$file1
+      inFile <- input$file1
 
-      # checks if there is an uploaded file, if there is one, it loads the file.
+      # checks if there is an uploaded file, if there is one, it loads the file and uses it.
       if (!is.null(inFile)){
         load(inFile$datapath)
+
+        vals$master_list <- master_list
+
+        updateSelectInput(session, "unites", choices = names(master_list$Equip_List))
+      }
+
+      })
+
+    Hist_Table <- reactive({
+
+      inFile <- input$file1
+      unite <- input$unites
+
+      if (unite == ""){
+        return()
       }
 
       if (is.null(inFile)){
@@ -23,21 +40,21 @@ function(input, output, session) {
 
       } else {
 
-        Dets <- hot_to_r(inpput_values$HistTable)
+        model <- vals$master_list$Equip_List[[unite]]$model
+        Dets <- as.tibble(vals$master_list$Market_Hist[[model]])
+        #Dets <- hot_to_r(vals$master_list$Market_Hist[[model]])
 
         if (!"Include" %in% colnames(Dets)) {
           Dets <- Dets %>% mutate(Include = NA) %>% select(Include, everything())
         }
 
         # Update various input fields with loaded data
-        updateTextInput(session, "url", value = inpput_values$url)
-        updateNumericInput(session, "lot", value = inpput_values$lot)
-        updateTextInput(session, "description", value = inpput_values$description)
-        updateTextInput(session, "model", value = inpput_values$model)
-        updateNumericInput(session, "year", value = inpput_values$year)
-        updateNumericInput(session, "hours", value = inpput_values$hours)
-        updateSelectInput(session, "valuationType", selected = inpput_values$valuationType)
-        updateSelectInput(session, "condition", selected = inpput_values$condition)
+        updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
+        updateTextInput(session, "model", value = vals$master_list$Equip_List[[unite]]$model)
+        updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
+        updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
+        updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
+        updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
 
         Dets
 

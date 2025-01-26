@@ -32,9 +32,9 @@ page_navbar(
             sidebar = sidebar(
               fileInput('file1', 'Choose File to Load Data'),  # File input for data
               downloadButton("downloadData", "Save Data"),     # Download button to save data
-
-              numericInput("lot", "Unite Number", value = 0),  # Numeric input for "Unite Number"
-              textInput("url", "URL"),                         # Text input for a URL
+              selectInput("unites",
+                          "Unite Number",
+                          choices = NULL),    # Dropdown for units
               textInput("description", "Description"),         # Text input for a description
               textInput("model", "Model"),                     # Text input for model name
               numericInput("year", "Year", value = 0),         # Numeric input for year
