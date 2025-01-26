@@ -67,22 +67,25 @@ function(input, output, session) {
     output$downloadData <- downloadHandler(
       # Generate a filename based on the current date and user input
       filename = function() {
+
         savedate <- format(Sys.time(), "%Y-%m-%d")
 
-        if (nrow(hot_to_r(input$HistTable)) > 2) {
-          paste0(savedate," - Valuation for lot ",
-                 input$lot,
-                 " - ",
-                 input$description,
-                 ".Rdata")
+        if (!is.null(vals$master_list)) {
+          paste0(savedate," - master_list.Rdata")
         } else {
           "NOT ENOUGH INFO TO SAVE.RData"
         }
       },
       # The actual process of saving the reactiveValues or user inputs
       content = function(file) {
-        inpput_values <- reactiveValuesToList(input)
-        save(inpput_values, file = file)
+
+        master_list <- isolate(vals$master_list)
+
+        if (!is.null(master_list)) {
+          save(master_list, file = file)
+        } else {
+          stop("No data available to save.")
+        }
       }
     )
 
