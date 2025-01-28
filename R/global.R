@@ -81,8 +81,6 @@ reused_hot_to_r <- function(input_data){
   } else {
     output
   }
-  
-  
 }
 
 

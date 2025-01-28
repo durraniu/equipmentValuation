@@ -43,7 +43,7 @@ function(input, output, session) {
       } else {
 
         model <- vals$master_list$Equip_List[[unite]]$model
-        Dets <- as.tibble(vals$master_list$Market_Hist[[model]])
+        Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
         #Dets <- hot_to_r(vals$master_list$Market_Hist[[model]])
 
         if (!"Include" %in% colnames(Dets)) {
@@ -471,7 +471,26 @@ function(input, output, session) {
                                      paste0("Average Price \\(= \\left( \\frac{Predictive Price + Comparison Retail}{2} \\right) = ",
                                             "\\left( \\frac{", dollar(pred_price), " + ", dollar(comp_price), "}{2} \\right) = ", dollar(average_price), "\\)"),
                                      sep = '<br/>'))
-                   )
+                   ),
+          # Two-plot layout for Price vs Year and Price vs Hours
+          fluidRow(column(1, ""),
+                   column(5, plotlyOutput("plot1")),
+                   column(5, plotlyOutput("plot2")),
+          ),
+          # Comparison table and a third plot for Price vs Condition Index
+          fluidRow(column(1, ""),
+                   column(5, 
+                          tags$h2("Auction vs Retail Comparison Table"),
+                          tableOutput("compTable"),
+                          ""),
+                   
+                   # Hide PLOT 3 if all condition indexes match.
+                   if ((length(unique(df$condition)) == 1)) {
+                     column(5, "")
+                   } else {
+                     column(5, plotlyOutput("plot3"))
+                   }
+          )
           )
 
       } else {

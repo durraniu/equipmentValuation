@@ -20,7 +20,8 @@ sidebar <- sidebar(
     accordion_panel(
       title = "Valuation Type & Equipment Condition",
       selectInput("valuationType", "Valuation Type",
-                  choices = c("Auction", "Retail")),
+                  choices = c("Auction", "Retail"), 
+                  multiple = TRUE),
       selectInput("condition", "Equipment Condition",
                   choices = conditions_Defaults)
     )
