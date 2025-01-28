@@ -1,11 +1,13 @@
 
 library(shiny)
 
+
 function(input, output, session) {
 
     # Store reactive values (data, etc.) across user sessions
     vals <- reactiveValues(data = NULL,
-                           master_list = NULL)
+                           master_list = NULL,
+                           summary_list = NULL)
 
     ##---- 1) REACTIVE EXPRESSION: LOADING / PREPARING DATA ----
 
@@ -153,19 +155,9 @@ function(input, output, session) {
 
       # If enough rows exist, build a linear model
       if (n > 2){
+        
+        fit_histtable(df, input$valuationType)
 
-        # Condition can be part of the model if there's more than one condition present
-        if (length(unique(df$condition)) == 1){
-          variable_list <- c("year", "hours")
-        } else {
-          variable_list <- c("year", "hours", "condition_index")
-        }
-
-        # Construct a formula dynamically for the chosen variables
-        formula <- reformulate(termlabels = variable_list, response = 'price')
-
-        # gives the linear fit for the variables that survived in variable_list
-        lm(formula, data = df)
       }
 
     })
@@ -488,4 +480,150 @@ function(input, output, session) {
 
     })
 
-}
+    ##---- 10) Summary Page ----
+    
+    output$dt_summary <- renderDT({
+      
+      # Build Sumamry Table
+      
+      master_list <- vals$master_list
+      if (!is.null(master_list)){
+
+        unit_list <- names(master_list$Equip_List)
+        
+        summary_table <- NULL
+        
+        for (i in unit_list) {
+          print(i)
+          
+          market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
+          
+          fit_liquidation <- fit_histtable(market_data, "Auction")
+          fit_market <- fit_histtable(market_data, "Retail")
+          
+          i_data <- tibble(year =  master_list$Equip_List[[i]]$year,
+                           hours = master_list$Equip_List[[i]]$hours,
+                           condition = master_list$Equip_List[[i]]$condition) %>%
+            mutate(condition = factor(condition, levels = conditions_Defaults)) %>%
+            mutate(condition_index = as.numeric(condition))
+          
+          value_liquidation <- price_predictor(fit_liquidation, i_data)
+          value_market <- price_predictor(fit_market, i_data)
+          
+          summary_table <- rbind(summary_table, tibble(Unit = i,
+                                                       categorie = master_list$Equip_List[[i]]$categorie,
+                                                       Liquidation = value_liquidation,
+                                                       Market = value_market,
+                                                       valuation = master_list$Equip_List[[i]]$valuation))
+        }
+        
+        summary_output <- summary_table %>%
+          group_by(categorie) %>%
+          summarize(Liquidation = sum(Liquidation),
+                    Market = sum(Market),
+                    Valuation = sum(valuation))
+
+        
+        datatable(
+          summary_output,
+          rownames = FALSE,
+          selection = "single",   # So we can detect which row was clicked
+          options = list(
+            # Minimal styling
+            dom = 't',    # show just the table, no search box or pagination
+            paging = FALSE,
+            ordering = FALSE
+          ),
+          class = "compact stripe cell-border"
+        ) %>%
+          formatCurrency(
+            columns = c("Liquidation", "Market", "Valuation"),
+            currency = "$",
+            digits = 0,       # Number of decimal places
+            interval = 3,     # Helps place commas (1,000 vs 1000)
+            mark = ","        # Thousands separator
+          )
+      }
+      
+
+      
+    })
+    
+    #--- Observe which row is selected in summaryTable
+    observeEvent(input$dt_summary_rows_selected, {
+      print(input$dt_summary_rows_selected)
+      
+       master_list <- vals$master_list
+
+       unit_list <- names(master_list$Equip_List)
+        
+       summary_table <- NULL
+        
+       for (i in unit_list) {
+          print(i)
+          
+          market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
+          
+          fit_liquidation <- fit_histtable(market_data, "Auction")
+          fit_market <- fit_histtable(market_data, "Retail")
+          
+          i_data <- tibble(year =  master_list$Equip_List[[i]]$year,
+                           hours = master_list$Equip_List[[i]]$hours,
+                           condition = master_list$Equip_List[[i]]$condition) %>%
+            mutate(condition = factor(condition, levels = conditions_Defaults)) %>%
+            mutate(condition_index = as.numeric(condition))
+          
+          value_liquidation <- price_predictor(fit_liquidation, i_data)
+          value_market <- price_predictor(fit_market, i_data)
+          
+          summary_table <- rbind(summary_table, tibble(Unit = i,
+                                                       categorie = master_list$Equip_List[[i]]$categorie,
+                                                       Liquidation = value_liquidation,
+                                                       Market = value_market,
+                                                       valuation = master_list$Equip_List[[i]]$valuation))
+        }
+
+       summary_output <- summary_table %>%
+         group_by(categorie) %>%
+         summarize(Liquidation = sum(Liquidation),
+                   Market = sum(Market),
+                   Valuation = sum(valuation))
+      
+      #browser()
+      # row index that user clicked
+      
+      #row_selected <- summary_output$categorie[input$dt_summary_rows_selected]
+      
+      if(TRUE) {
+        # Get the category from the summary table
+        cat_selected <- summary_output$categorie[input$dt_summary_rows_selected]
+        
+        # Filter the original raw data for that category
+        detail_data <- summary_table %>% filter(categorie == cat_selected)
+        
+        # Show a modal with a second DT (or any UI) to display the detail
+        #browser()
+        showModal(
+          modalDialog(
+            title = paste("Details for category:", cat_selected),
+            renderDT({
+              datatable(
+                detail_data,
+                rownames = FALSE,
+                options = list(dom = 't', paging = FALSE)
+              ) %>%
+                formatCurrency(
+                  columns = c("Liquidation","Market","valuation"),
+                  currency = "$",
+                  digits = 0,
+                  mark = ","
+                )
+            }),
+            easyClose = TRUE,
+            size = "l"
+          )
+        )
+      }
+    })
+    
+    }

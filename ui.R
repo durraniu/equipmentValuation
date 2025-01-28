@@ -2,7 +2,7 @@
 library(rhandsontable)
 library(shiny)
 library(bslib)
-
+library(DT)
 
 # Sidebar -----------------------------------------------------------------
 
@@ -33,7 +33,10 @@ sidebar <- sidebar(
 
 summary_panel <- nav_panel(
   title = "Summary",
-  "SUMMARY CONTENT"
+  "SUMMARY CONTENT",
+  card(
+    DTOutput("dt_summary")
+    )
 )
 
 

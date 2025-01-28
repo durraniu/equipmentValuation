@@ -68,14 +68,45 @@ price_predictor <- function(fit, new_data){
 # based on the user's selected valuation types, source, and whether items
 # are included. Adds a numeric condition_index field for modeling.
 reused_hot_to_r <- function(input_data){
-
-  hot_to_r(input_data$HistTable) %>%
-    filter(valuationType %in% input_data$valuationType_box) %>%
-    filter(source %in% input_data$source_box) %>%
+  
+  output <- hot_to_r(input_data$HistTable) %>% 
+    filter(valuationType %in% input_data$valuationType) %>%
     filter(Include == TRUE) %>%
     mutate(condition = factor(condition, levels = conditions_Defaults)) %>%
     mutate(condition_index = as.numeric(condition))
-
+  
+  if (!is.null(input_data$source_box)) {
+    output %>%
+      filter(source %in% input_data$source_box)
+  } else {
+    output
+  }
+  
+  
 }
 
+
+#### Fit Model ----
+fit_histtable <- function(df, value_input){
+  
+  df <- df %>% 
+    filter(valuationType %in% value_input) %>%
+    filter(Include == TRUE) %>%
+    mutate(condition = factor(condition, levels = conditions_Defaults)) %>%
+    mutate(condition_index = as.numeric(condition))
+  
+  if (length(unique(df$condition)) == 1){
+    variable_list <- c("year", "hours")
+  } else {
+    variable_list <- c("year", "hours", "condition_index")
+  }
+  
+  # Construct a formula dynamically for the chosen variables
+  formula <- reformulate(termlabels = variable_list, response = 'price')
+  
+  # gives the linear fit for the variables that survived in variable_list
+  fit <- lm(formula, data = df)
+  
+  return(fit)
+}
 
