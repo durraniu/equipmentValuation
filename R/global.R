@@ -29,11 +29,11 @@ make_variable_list <- function(df, input){
                     workEnvironment = input$workEnvironment,
                     geographics = input$geographics,
                     warranty = input$warranty,
-                    valuationType = input$valuationType_box,
+                    valuationType = input$valuationType,
                     condition = input$condition)
 
   # Start with a broader list of potential variables
-  variable_list <- c("year", "hours", "workEnvironment", "geographics", "warranty", "valuationType_box")
+  variable_list <- c("year", "hours", "workEnvironment", "geographics", "warranty", "valuationType")
 
   # Loop through each potential variable to ensure at least 2 unique data values
   # and that the user's selected value is actually present in the data.

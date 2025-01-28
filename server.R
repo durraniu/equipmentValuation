@@ -123,7 +123,7 @@ function(input, output, session) {
       if(!is.null(input$HistTable)){
         # Identify unique "source" values for the selected valuation types
         source_choices <- unique((hot_to_r(input$HistTable)%>%
-                                    filter(valuationType %in% input$valuationType_box)
+                                    filter(valuationType %in% input$valuationType)
         )$source)
 
         # Check if "Ritchie Bros" is in the list, if not, add it
@@ -357,7 +357,7 @@ function(input, output, session) {
       # Create a tibble with the relevant variables (year, hours, etc.)
       new_data <- tibble(year = per_year,
                          hours = per_hours,
-                         valuationType = per_source,
+                         #valuationType = per_source,
                          condition_index = per_condition)
 
     })
