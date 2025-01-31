@@ -13,17 +13,22 @@ function(input, output, session) {
 
     observeEvent(input$file1, {
       req(input$file1)
-
+      
       inFile <- input$file1
-
-      # checks if there is an uploaded file, if there is one, it loads the file and uses it.
-      if (!is.null(inFile)){
-        load(inFile$datapath)
-
-        vals$master_list <- master_list
-
-        updateSelectInput(session, "unites", choices = names(master_list$Equip_List))
+      file_ext <- tools::file_ext(inFile$name)
+      
+      # if (is.null(inFile)) {
+      #   return()
+      # }
+      
+      if (file_ext != "RData") {
+        showToast("error", "Invalid file type! Please upload a .RData file.")
+        return()
       }
+      
+      load(inFile$datapath)
+      vals$master_list <- master_list
+      updateSelectInput(session, "unites", choices = names(master_list$Equip_List))
 
       })
 
@@ -38,7 +43,7 @@ function(input, output, session) {
 
       if (is.null(inFile)){
 
-        HistTable
+        return(HistTable)
 
       } else {
 
@@ -47,7 +52,9 @@ function(input, output, session) {
         #Dets <- hot_to_r(vals$master_list$Market_Hist[[model]])
 
         if (!"Include" %in% colnames(Dets)) {
-          Dets <- Dets %>% mutate(Include = NA) %>% select(Include, everything())
+          Dets <- Dets %>% 
+            mutate(Include = NA) %>% 
+            select(Include, everything())
         }
 
         # Update various input fields with loaded data
@@ -170,32 +177,31 @@ function(input, output, session) {
 
       if (is.null(hot_to_r(input$HistTable))){
         return()
-      } else {
-        df <- reused_hot_to_r(input)
+      } 
+        
+      df <- reused_hot_to_r(input)
+      if (nrow(df) <= 2) {
+        return(ggplot())
       }
+      
+      fit <- fit()
+      pred_year <- input$year
+      new_data <- given_details()
+      pred_price <- price_predictor(fit, new_data)
+      pred_hours <-input$hours
+      comp_price <- comp_price()
+      average_price <- average_price()
 
-      if (nrow(df) > 2){
-        fit <- fit()
-        pred_year <- input$year
-        new_data <- given_details()
-        pred_price <- price_predictor(fit, new_data)
-        pred_hours <-input$hours
-        comp_price <- comp_price()
-        average_price <- average_price()
-
-        # Base ggplot with points and a linear fit
-        df %>%
-          ggplot(aes(x = year, y = price)) +
-          geom_point() + #aes(size = hours)) +
-          #geom_line() +
-          geom_smooth(method = "lm") +
-          geom_point(aes(x = pred_year, y = pred_price, size = pred_hours), color = "Red", shape = 4) +
-          geom_point(aes(x = pred_year, y = comp_price, size = pred_hours), color = "Blue", shape = 4) +
-          geom_point(aes(x = pred_year, y = average_price, size = pred_hours), color = "Green", shape = 4)
-      } else {
-        # If not enough data, do nothing or fallback
-        ggplot()
-      }
+      # Base ggplot with points and a linear fit
+      df %>%
+        ggplot(aes(x = year, y = price)) +
+        geom_point() + #aes(size = hours)) +
+        #geom_line() +
+        geom_smooth(method = "lm") +
+        geom_point(aes(x = pred_year, y = pred_price, size = pred_hours), color = "Red", shape = 4) +
+        geom_point(aes(x = pred_year, y = comp_price, size = pred_hours), color = "Blue", shape = 4) +
+        geom_point(aes(x = pred_year, y = average_price, size = pred_hours), color = "Green", shape = 4)
+      
     })
 
     ####---- PLOT 2: Price vs Hours ----
@@ -268,7 +274,7 @@ function(input, output, session) {
 
     # comp_Table: builds a summary comparison of Auction vs Retail data
     comp_Table <- reactive({
-
+     req(input$HistTable)
       df <-  hot_to_r(input$HistTable) %>%
         filter(Include == TRUE)
 
@@ -310,7 +316,7 @@ function(input, output, session) {
 
     # comp_price: calculates a "comparison" retail price based on the summarized table
     comp_price <- reactive({
-
+      
       compTable <- comp_Table()
 
       comp_price <- compTable$Retail[2] * compTable$diff[4]
@@ -319,8 +325,14 @@ function(input, output, session) {
 
     })
 
+    output$price_retail <- renderText({
+      req(comp_price())
+      comp_price()
+    })
+    
     # average_price: calculates the midpoint of the predicted price and the comparison price
     average_price <- reactive({
+      req(input$HistTable)
 
       new_data <- given_details()
 
@@ -335,6 +347,11 @@ function(input, output, session) {
 
       average_price
 
+    })
+    
+    output$price_average <- renderText({
+      req(average_price())
+      average_price()
     })
 
     # given_details: constructs a new data frame for prediction based on user inputs
@@ -379,8 +396,6 @@ function(input, output, session) {
 
     output$predictivePrice <- renderText({
 
-      output$predictivePrice <- renderText({
-
         if (is.null(hot_to_r(input$HistTable))){
           n <- 0
         } else {
@@ -398,8 +413,6 @@ function(input, output, session) {
           "No Data Yet"
         }
       })
-
-    })
 
     output$retailPrice <- renderText({
       comp_price <- comp_price()
@@ -437,6 +450,13 @@ function(input, output, session) {
       # Example plot
       plot(1:10, 1:10, type = "l")
     })
+    
+    predictive_price <- reactiveVal()
+    
+    output$price_pred <- renderText({
+      req(predictive_price())
+      predictive_price()
+    })
 
     # Renders a UI with text, summary statistics, and plots
     output$ex1 <- renderUI({
@@ -453,6 +473,7 @@ function(input, output, session) {
       if (n > 2){
         params <- summary(fit)
         pred_price <- price_predictor(fit, new_data)
+        predictive_price(pred_price)
         comp_price <- comp_price()
         average_price <- average_price()
 
@@ -462,35 +483,35 @@ function(input, output, session) {
         AuctionAverage <- comp_Table()$Auction[4]
 
         tagList(
-          # Introduction row, showing R-squared and relevant computed prices
-          fluidRow(withMathJax(),
-                   tags$h2("Formulas to Determin Prices"),
-                   HTML(paste(paste0("Predictive Price = Best fit lm() model of Hours, ", if_else((length(unique(df$condition)) == 1), "and ModelYear \\( = ", "ModelYear and condition index \\( = "), dollar(pred_price), "\\)"),
-                                     paste0("Comparison Retail  \\(= \\left(1 -  \\frac{AuctionAverage }{RetailAverage} \\right) * RetailMax =",
-                                            "\\left(1 -  \\frac{", dollar(AuctionAverage), "}{", dollar(RetailAverage), "} \\right) * ", dollar(RetailMax), " = ", dollar(comp_price), "\\)"),
-                                     paste0("Average Price \\(= \\left( \\frac{Predictive Price + Comparison Retail}{2} \\right) = ",
-                                            "\\left( \\frac{", dollar(pred_price), " + ", dollar(comp_price), "}{2} \\right) = ", dollar(average_price), "\\)"),
-                                     sep = '<br/>'))
-                   ),
+          # # Introduction row, showing R-squared and relevant computed prices
+          # fluidRow(withMathJax(),
+          #          tags$h2("Formulas to Determin Prices"),
+          #          HTML(paste(paste0("Predictive Price = Best fit lm() model of Hours, ", if_else((length(unique(df$condition)) == 1), "and ModelYear \\( = ", "ModelYear and condition index \\( = "), dollar(pred_price), "\\)"),
+          #                            paste0("Comparison Retail  \\(= \\left(1 -  \\frac{AuctionAverage }{RetailAverage} \\right) * RetailMax =",
+          #                                   "\\left(1 -  \\frac{", dollar(AuctionAverage), "}{", dollar(RetailAverage), "} \\right) * ", dollar(RetailMax), " = ", dollar(comp_price), "\\)"),
+          #                            paste0("Average Price \\(= \\left( \\frac{Predictive Price + Comparison Retail}{2} \\right) = ",
+          #                                   "\\left( \\frac{", dollar(pred_price), " + ", dollar(comp_price), "}{2} \\right) = ", dollar(average_price), "\\)"),
+          #                            sep = '<br/>'))
+          #          ),
           # Two-plot layout for Price vs Year and Price vs Hours
-          fluidRow(column(1, ""),
-                   column(5, plotlyOutput("plot1")),
-                   column(5, plotlyOutput("plot2")),
+          card(
+            card_header(
+              tags$h2("Plots")
+            ),
+            layout_column_wrap(
+              width = 1/3,
+              plotlyOutput("plot1"),
+              plotlyOutput("plot2"),
+              plotlyOutput("plot3")
+            )
           ),
-          # Comparison table and a third plot for Price vs Condition Index
-          fluidRow(column(1, ""),
-                   column(5, 
-                          tags$h2("Auction vs Retail Comparison Table"),
-                          tableOutput("compTable"),
-                          ""),
-                   
-                   # Hide PLOT 3 if all condition indexes match.
-                   if ((length(unique(df$condition)) == 1)) {
-                     column(5, "")
-                   } else {
-                     column(5, plotlyOutput("plot3"))
-                   }
+          card(
+            card_header(
+              tags$h2("Auction vs Retail Comparison Table"),
+            ),
+            tableOutput("compTable")
           )
+          
           )
 
       } else {
