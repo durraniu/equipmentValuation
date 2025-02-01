@@ -1,6 +1,7 @@
 # Load the required libraries
 library(rhandsontable)
 library(shiny)
+library(shinyFeedback)
 library(bslib)
 library(DT)
 
@@ -47,10 +48,38 @@ summary_panel <- nav_panel(
 
 details_panel <- nav_panel(
   title = "Details",
+  card(
+    min_height = "200px",
+    card_header(
+      tags$h2("Price Comparison")
+    ),
+    layout_column_wrap(
+      width = 1/3,
+      value_box(
+        "Predictive Price",
+        textOutput("price_pred")
+      ),
+      value_box(
+        "Retail Price",
+        textOutput("price_retail")
+      ),
+      value_box(
+        "Average Price",
+        textOutput("price_average")
+      )
+    )
+  ),
   div(
     style = "overflow-x: auto; white-space: nowrap;",
     uiOutput("dynamicCheckbox"),      # Dynamic checkbox (server-side)
-    rHandsontableOutput("HistTable", width = "100%"),
+    accordion(
+      accordion_panel(
+        title = "Table",
+        tags$div(
+          rHandsontableOutput("HistTable")
+        )
+      )
+    ),
     uiOutput('ex1')
   )
 )
@@ -63,6 +92,10 @@ page_navbar(
   title = "Equipment Valuation Tool",
   selected = "Summary",
   sidebar = sidebar,
+  header = div(
+    useBusyIndicators(),
+    useShinyFeedback()
+  ),
   summary_panel,
   details_panel
 )
