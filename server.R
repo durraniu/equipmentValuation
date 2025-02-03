@@ -49,7 +49,6 @@ function(input, output, session) {
 
         model <- vals$master_list$Equip_List[[unite]]$model
         Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
-        #Dets <- hot_to_r(vals$master_list$Market_Hist[[model]])
 
         if (!"Include" %in% colnames(Dets)) {
           Dets <- Dets %>% 
@@ -59,11 +58,14 @@ function(input, output, session) {
 
         # Update various input fields with loaded data
         updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
-        updateTextInput(session, "model", value = vals$master_list$Equip_List[[unite]]$model)
+        updateSelectInput(session, "model", 
+                          selected = vals$master_list$Equip_List[[unite]]$model, 
+                          choices = names(vals$master_list$Market_Hist))
         updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
         updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
         updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
         updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
+        updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
 
         Dets
 
@@ -193,14 +195,21 @@ function(input, output, session) {
       average_price <- average_price()
 
       # Base ggplot with points and a linear fit
-      df %>%
+      p <- df %>%
         ggplot(aes(x = year, y = price)) +
-        geom_point() + #aes(size = hours)) +
-        #geom_line() +
+        geom_point(aes(color =  valuationType), size = 2) +
         geom_smooth(method = "lm") +
-        geom_point(aes(x = pred_year, y = pred_price, size = pred_hours), color = "Red", shape = 4) +
-        geom_point(aes(x = pred_year, y = comp_price, size = pred_hours), color = "Blue", shape = 4) +
-        geom_point(aes(x = pred_year, y = average_price, size = pred_hours), color = "Green", shape = 4)
+        geom_point(aes(x = pred_year, y = pred_price), size = 4, color = "Red", shape = 4) +
+        geom_point(aes(x = pred_year, y = comp_price), size = 4, color = "Blue", shape = 4) +
+        geom_point(aes(x = pred_year, y = average_price), size = 4, color = "Green", shape = 4)+
+        theme(legend.position="none")
+      
+      if (!is.na(input$valuation)){
+        valuation_y <-  input$valuation
+        p <- p + geom_point(aes(x = pred_year, y = valuation_y), size = 4, color = "Orange", shape = 13)
+      }
+      
+      p
       
     })
 
@@ -222,13 +231,22 @@ function(input, output, session) {
         comp_price <- comp_price()
         average_price <- average_price()
 
-        df %>%
+        p2 <- df %>%
           ggplot(aes(x = hours, y = price)) +
-          geom_point() +
+          geom_point(aes(color =  valuationType), size = 2) +
           geom_smooth(method = "lm") +
-          geom_point(aes(x = pred_hours, y = pred_price, size = pred_year), color = "Red", shape = 4) +
-          geom_point(aes(x = pred_hours, y = comp_price, size = pred_year), color = "Blue", shape = 4) +
-          geom_point(aes(x = pred_hours, y = average_price, size = pred_year), color = "Green", shape = 4)
+          geom_point(aes(x = pred_hours, y = pred_price), size = 4, color = "Red", shape = 4) +
+          geom_point(aes(x = pred_hours, y = comp_price), size = 4, color = "Blue", shape = 4) +
+          geom_point(aes(x = pred_hours, y = average_price), size = 4, color = "Green", shape = 4)+
+          theme(legend.position="none")
+        
+        if (!is.na(input$valuation)){
+          valuation_y <-  input$valuation
+          p2 <- p2 + geom_point(aes(x = pred_hours, y = valuation_y), size = 4, color = "Orange", shape = 13)
+        }
+        
+        p2
+        
       } else {
         ggplot()
       }
@@ -258,13 +276,20 @@ function(input, output, session) {
         comp_price <- comp_price()
         average_price <- average_price()
 
-        df %>%
+        p3 <- df %>%
           ggplot(aes(x = condition_index, y = price)) +
-          geom_point() +
+          geom_point(aes(color =  valuationType), size = 2) +
           geom_smooth(method = "lm") +
-          geom_point(aes(x = pred_condition_index, y = pred_price, size = pred_year), color = "Red", shape = 4) +
-          geom_point(aes(x = pred_condition_index, y = comp_price, size = pred_year), color = "Blue", shape = 4) +
-          geom_point(aes(x = pred_condition_index, y = average_price, size = pred_year), color = "Green", shape = 4)
+          geom_point(aes(x = pred_condition_index, y = pred_price), size = 4, color = "Red", shape = 4) +
+          geom_point(aes(x = pred_condition_index, y = comp_price), size = 4, color = "Blue", shape = 4) +
+          geom_point(aes(x = pred_condition_index, y = average_price), size = 4, color = "Green", shape = 4) +
+          theme(legend.position="none")
+        
+        if (!is.na(input$valuation)){
+          valuation_y <-  input$valuation
+          p3 <- p3 + geom_point(aes(x = pred_condition_index, y = valuation_y), size = 4, color = "Orange", shape = 13)
+        }
+        
       } else {
         ggplot()
       }

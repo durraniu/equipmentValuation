@@ -8,23 +8,28 @@ library(DT)
 # Sidebar -----------------------------------------------------------------
 
 sidebar <- sidebar(
-  fileInput('file1', 'Choose File to Load Data'),
   accordion(
+    accordion_panel(
+      title = "File Handling",
+      fileInput('file1', 'Choose File to Load Data'),
+      
+    ),
     accordion_panel(
       title = "Equipment Details",
       selectInput("unites", "Unite Number", choices = NULL),    # Dropdown for units
       textInput("description", "Description"),
-      textInput("model", "Model"),
+      #textInput("model", "Model"),
+      selectInput("model", "Model", choices = NULL),  # Dropdown for Models in our Hist Data
       numericInput("year", "Year", value = 0),
-      numericInput("hours", "Hours", value = 0)
-    ),
-    accordion_panel(
-      title = "Valuation Type & Equipment Condition",
-      selectInput("valuationType", "Valuation Type",
-                  choices = c("Auction", "Retail"), 
-                  multiple = TRUE),
+      numericInput("hours", "Hours", value = 0),
       selectInput("condition", "Equipment Condition",
                   choices = conditions_Defaults)
+    ),
+    accordion_panel(
+      title = "Valuation Type",
+      selectInput("valuationType", "Valuation Type",
+                  choices = c("Auction", "Retail"), 
+                  multiple = TRUE)
     )
   )
 )
@@ -49,12 +54,12 @@ summary_panel <- nav_panel(
 details_panel <- nav_panel(
   title = "Details",
   card(
-    min_height = "200px",
+    min_height = "400px",
     card_header(
       tags$h2("Price Comparison")
     ),
     layout_column_wrap(
-      width = 1/3,
+      width = 1/2,
       value_box(
         "Predictive Price",
         textOutput("price_pred")
@@ -66,6 +71,10 @@ details_panel <- nav_panel(
       value_box(
         "Average Price",
         textOutput("price_average")
+      ),
+      value_box(
+        "Assigned Valuation",
+        numericInput("valuation", "Valuation to use", value = NULL)
       )
     )
   ),
