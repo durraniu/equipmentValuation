@@ -61,6 +61,13 @@ function(input, output, session) {
         updateSelectInput(session, "model", 
                           selected = vals$master_list$Equip_List[[unite]]$model, 
                           choices = names(vals$master_list$Market_Hist))
+        
+        unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
+        
+        updateSelectInput(session, "categorie", 
+                          selected = vals$master_list$Equip_List[[unite]]$categorie, 
+                          choices = unique_categories)
+        
         updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
         updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
         updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
@@ -73,6 +80,54 @@ function(input, output, session) {
 
     })
 
+    observeEvent(input$unites, {
+      
+      inFile <- input$file1
+      unite <- input$unites
+      
+      if (unite == ""){
+        return()
+      }
+      
+      if (is.null(inFile)){
+        
+        return(HistTable)
+        
+      } else {
+        
+        model <- vals$master_list$Equip_List[[unite]]$model
+        Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
+        
+        if (!"Include" %in% colnames(Dets)) {
+          Dets <- Dets %>% 
+            mutate(Include = NA) %>% 
+            select(Include, everything())
+        }
+        
+        # Update various input fields with loaded data
+        updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
+        updateSelectInput(session, "model", 
+                          selected = vals$master_list$Equip_List[[unite]]$model, 
+                          choices = names(vals$master_list$Market_Hist))
+        
+        unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
+        
+        updateSelectInput(session, "categorie", 
+                          selected = vals$master_list$Equip_List[[unite]]$categorie, 
+                          choices = unique_categories)
+        
+        updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
+        updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
+        updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
+        updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
+        updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
+        
+        Dets
+        
+      }
+      
+    })
+    
     ##---- 2) DOWNLOAD HANDLER: SAVING DATA ----
 
     output$downloadData <- downloadHandler(
@@ -82,7 +137,7 @@ function(input, output, session) {
         savedate <- format(Sys.time(), "%Y-%m-%d")
 
         if (!is.null(vals$master_list)) {
-          paste0(savedate," - master_list.Rdata")
+          paste0(savedate," - master_list.RData")
         } else {
           "NOT ENOUGH INFO TO SAVE.RData"
         }
@@ -550,7 +605,6 @@ function(input, output, session) {
     output$dt_summary <- renderDT({
       
       # Build Sumamry Table
-      
       master_list <- vals$master_list
       if (!is.null(master_list)){
 
@@ -560,6 +614,7 @@ function(input, output, session) {
         
         for (i in unit_list) {
           print(i)
+          
           
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
           
@@ -575,11 +630,17 @@ function(input, output, session) {
           value_liquidation <- price_predictor(fit_liquidation, i_data)
           value_market <- price_predictor(fit_market, i_data)
           
+          if (is.null(master_list$Equip_List[[i]]$valuation)) {
+            valueation_to_use <- 0
+          } else {
+            valueation_to_use <- master_list$Equip_List[[i]]$valuation
+          }
+          
           summary_table <- rbind(summary_table, tibble(Unit = i,
                                                        categorie = master_list$Equip_List[[i]]$categorie,
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
-                                                       valuation = master_list$Equip_List[[i]]$valuation))
+                                                       valuation = valueation_to_use))
         }
         
         summary_output <- summary_table %>%
@@ -641,11 +702,17 @@ function(input, output, session) {
           value_liquidation <- price_predictor(fit_liquidation, i_data)
           value_market <- price_predictor(fit_market, i_data)
           
+          if (is.null(master_list$Equip_List[[i]]$valuation)) {
+            valueation_to_use <- 0
+          } else {
+            valueation_to_use <- master_list$Equip_List[[i]]$valuation
+          }
+          
           summary_table <- rbind(summary_table, tibble(Unit = i,
                                                        categorie = master_list$Equip_List[[i]]$categorie,
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
-                                                       valuation = master_list$Equip_List[[i]]$valuation))
+                                                       valuation = valueation_to_use))
         }
 
        summary_output <- summary_table %>%
@@ -691,4 +758,77 @@ function(input, output, session) {
       }
     })
     
+    ##---- 11) Add New Units ----
+    observeEvent(input$new_unit, {
+      unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
+      showModal(modalDialog(
+        title = "Adding a New Unit",
+        "This is an important message!",
+        textInput("add_new_unites", "New Unite Number"),
+        textInput("description", "Description"),
+        selectInput("categorie", "Categorie", unique_categories),
+        selectInput("model", "Model", choices = names(vals$master_list$Market_Hist)),  # Dropdown for Models in our Hist Data
+        numericInput("year", "Year", value = 0),
+        numericInput("hours", "Hours", value = 0),
+        selectInput("condition", "Equipment Condition",
+                    choices = conditions_Defaults),
+        easyClose = FALSE,
+        footer = tagList(actionButton("confirmCreate", "Create"),
+                         modalButton("Cancel"))
+      ))
+    })
+    
+    observeEvent(input$confirmCreate, {
+      
+      new_name <- input$add_new_unites
+      new_item <- list(description = input$description,
+                       categorie = input$categorie,
+                       model = input$model,
+                       year = input$year,
+                       hours = input$hours,
+                       condition = input$condition,
+                       valuationType = NULL,
+                       valuation = NULL
+                       )
+      
+      vals$master_list$Equip_List[[new_name]] <- new_item
+      
+      sorted_names <- sort(names(vals$master_list$Equip_List))
+      vals$master_list$Equip_List <- vals$master_list$Equip_List[sorted_names]
+      
+      updateSelectInput(session, "unites", choices = sorted_names)
+      
+     # browser()
+     # vals$master_list$Equip_List[[input$add_new_unites]] <- list(
+     #   description = input$description,
+     #   model = input$model,
+     #   year = input$year,
+     #   hours = input$hours,
+     #   condition = input$condition,
+     #   valuationType = NULL,
+     #   valuation = NULL
+     # )
+      
+     # new_unit_list <- names(vals$master_list$Equip_List)
+     # # Update the selectInput with the new unit
+     # updateSelectInput(session, "unites", choices = new_unit_list)
+      removeModal()
+      
+    })
+    
+    
+    ##---- 12) Add New Models ----
+    observeEvent(input$show2, {
+      showModal(modalDialog(
+        title = "Important message",
+        "This is an important message!",
+        easyClose = TRUE
+      ))
+    })
+    ##---- 13) Update Valuation ----
+    observeEvent(input$assign_valuation, {
+      
+      vals$master_list$Equip_List[[input$unites]]$valuation <- input$valuation
+      
+    })
     }

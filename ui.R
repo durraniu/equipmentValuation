@@ -11,12 +11,21 @@ sidebar <- sidebar(
   accordion(
     accordion_panel(
       title = "File Handling",
+      open = TRUE,
       fileInput('file1', 'Choose File to Load Data'),
-      
+      downloadButton("downloadData", "Save Data")
+    ),
+    accordion_panel(
+      title = "Adding New Units and Models",
+      open = FALSE,
+      actionButton("new_unit", "Add a New Unit"),
+      actionButton("show2", "Show2 modal dialog")
     ),
     accordion_panel(
       title = "Equipment Details",
+      open = FALSE,
       selectInput("unites", "Unite Number", choices = NULL),    # Dropdown for units
+      selectInput("categorie", "Categorie", choices = NULL),     # Dropdown for Categories in our Hist Data
       textInput("description", "Description"),
       #textInput("model", "Model"),
       selectInput("model", "Model", choices = NULL),  # Dropdown for Models in our Hist Data
@@ -27,6 +36,7 @@ sidebar <- sidebar(
     ),
     accordion_panel(
       title = "Valuation Type",
+      open = FALSE,
       selectInput("valuationType", "Valuation Type",
                   choices = c("Auction", "Retail"), 
                   multiple = TRUE)
@@ -74,7 +84,8 @@ details_panel <- nav_panel(
       ),
       value_box(
         "Assigned Valuation",
-        numericInput("valuation", "Valuation to use", value = NULL)
+        numericInput("valuation", label = NULL, value = NULL),
+        actionButton("assign_valuation", "Assign Valuation")
       )
     )
   ),
