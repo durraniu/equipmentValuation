@@ -2537,37 +2537,6 @@
         "Built": "R 4.3.0; ; 2024-06-26 20:29:15 UTC; windows"
       }
     },
-    "renv": {
-      "Source": "CRAN",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "description": {
-        "Package": "renv",
-        "Type": "Package",
-        "Title": "Project Environments",
-        "Version": "1.0.2",
-        "Authors@R": "c(\n    person(\"Kevin\", \"Ushey\", role = c(\"aut\", \"cre\"), email = \"kevin@rstudio.com\",\n           comment = c(ORCID = \"0000-0003-2880-7407\")),\n    person(\"Hadley\", \"Wickham\", role = c(\"aut\"), email = \"hadley@rstudio.com\",\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n    )",
-        "Description": "A dependency management toolkit for R. Using 'renv', you can create\n    and manage project-local R libraries, save the state of these libraries to\n    a 'lockfile', and later restore your library as required. Together, these\n    tools can help make your projects more isolated, portable, and reproducible.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://rstudio.github.io/renv/, https://github.com/rstudio/renv",
-        "BugReports": "https://github.com/rstudio/renv/issues",
-        "Imports": "utils",
-        "Suggests": "BiocManager, cli, covr, cpp11, devtools, gitcreds, jsonlite,\nknitr, miniUI, packrat, pak, R6, remotes, reticulate,\nrmarkdown, rstudioapi, shiny, testthat, uuid, waldo, yaml,\nwebfakes",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.2.3",
-        "VignetteBuilder": "knitr",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Config/testthat/parallel": "true",
-        "Config/testthat/start-first": "bioconductor,python,install,restore,snapshot,retrieve,remotes",
-        "NeedsCompilation": "no",
-        "Packaged": "2023-08-14 23:03:34 UTC; kevin",
-        "Author": "Kevin Ushey [aut, cre] (<https://orcid.org/0000-0003-2880-7407>),\n  Hadley Wickham [aut] (<https://orcid.org/0000-0003-4757-117X>),\n  Posit Software, PBC [cph, fnd]",
-        "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
-        "Repository": "CRAN",
-        "Date/Publication": "2023-08-15 07:40:02 UTC",
-        "Built": "R 4.3.2; ; 2025-01-25 00:19:30 UTC; windows"
-      }
-    },
     "reprex": {
       "Source": "CRAN",
       "Repository": "https://packagemanager.posit.co/cran/latest",
@@ -3571,7 +3540,7 @@
   },
   "files": {
     ".Rprofile": {
-      "checksum": "67e5b2a2264c02f231917167dca32b8e"
+      "checksum": "f86c654fa284953a927bc73b651950e2"
     },
     "data/DummyFileBuilder.R": {
       "checksum": "dd96ee92a43094cb19ab3f29cf428d48"
@@ -3590,9 +3559,6 @@
     },
     "README.qmd": {
       "checksum": "ead50a4796da5919ce61f966a55f0f83"
-    },
-    "renv.lock": {
-      "checksum": "2b28d3ebaf5b6f891b3190c882e8bd03"
     },
     "server.R": {
       "checksum": "2f9a36f36a7911d22257372df2fd9a1f"
