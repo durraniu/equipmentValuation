@@ -12,6 +12,7 @@ sidebar <- sidebar(
     accordion_panel(
       title = "File Handling",
       open = TRUE,
+      uiOutput('master_button'),
       fileInput('file1', 'Choose File to Load Data'),
       downloadButton("downloadData", "Save Data"),
       actionButton("pause", "Pause App")
@@ -19,8 +20,9 @@ sidebar <- sidebar(
     accordion_panel(
       title = "Adding New Units and Models",
       open = FALSE,
+      actionButton("new_catagorie", HTML("Add a New <br>Model Catagorie")),
+      actionButton("new_model", HTML("Add a New <br>Model History")),
       actionButton("new_unit", "Add a New Unit"),
-      actionButton("new_model", "Add a New Model History")
     ),
     accordion_panel(
       title = "Equipment Details",
@@ -38,8 +40,6 @@ sidebar <- sidebar(
   )
 )
 
-
-
 # Summary -----------------------------------------------------------------
 
 summary_panel <- nav_panel(
@@ -49,8 +49,6 @@ summary_panel <- nav_panel(
     DTOutput("dt_summary")
     )
 )
-
-
 
 
 # Details -----------------------------------------------------------------
@@ -88,8 +86,9 @@ details_panel <- nav_panel(
     uiOutput("dynamicCheckbox"),      # Dynamic checkbox (server-side)
     accordion(
       accordion_panel(
-        title = "Table",
+        title = "History Table",
         tags$div(
+          actionButton("save_HistTable", "Save Changes to History Table"),
           rHandsontableOutput("HistTable")
         )
       )
@@ -97,7 +96,6 @@ details_panel <- nav_panel(
     uiOutput('ex1')
   )
 )
-
 
 
 # Main UI -----------------------------------------------------------------

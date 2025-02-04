@@ -3,8 +3,8 @@ library(shiny)
 
 
 function(input, output, session) {
-
-    # Store reactive values (data, etc.) across user sessions
+  
+  # Store reactive values (data, etc.) across user sessions
     vals <- reactiveValues(data = NULL,
                            master_list = NULL,
                            summary_list = NULL,
@@ -217,6 +217,8 @@ function(input, output, session) {
 
         # Render a checkbox group with these source choices
         
+        value_selected <- c("Auction", "Retail")
+        
           layout_column_wrap(
               width = 1/2,
             card(
@@ -224,12 +226,12 @@ function(input, output, session) {
               open = FALSE,
               checkboxGroupInput("valuationType", "Valuation Type",
                                  choices = c("Auction", "Retail"),
-                                 selected = c("Auction", "Retail"))
+                                 if (is.null(input$source_box)) value_selected else input$valuationType)
             ),
             card(
               checkboxGroupInput("source_box", "Source of Auction or Retail:",
                                  choices = source_choices,
-                                 selected = source_choices)
+                                 if (is.null(input$source_box)) source_choices else input$source_box)
               )
             )
           
@@ -305,41 +307,40 @@ function(input, output, session) {
 
     ####---- PLOT 2: Price vs Hours ----
     output$plot2 <- renderPlotly({
-
+      
       if (is.null(hot_to_r(input$HistTable))){
         return()
-      } else {
-        df <- reused_hot_to_r(input)
+      } 
+      
+      df <- reused_hot_to_r(input)
+      if (nrow(df) <= 2) {
+        return(ggplot())
       }
 
-      if (nrow(df) > 2){
-        fit <- fit()
-        new_data <- given_details()
-        pred_year <- input$year
-        pred_price <- price_predictor(fit, new_data)
-        pred_hours <-input$hours
-        comp_price <- comp_price()
-        average_price <- average_price()
+      fit <- fit()
+      new_data <- given_details()
+      pred_year <- input$year
+      pred_price <- price_predictor(fit, new_data)
+      pred_hours <-input$hours
+      comp_price <- comp_price()
+      average_price <- average_price()
 
-        p2 <- df %>%
-          ggplot(aes(x = hours, y = price)) +
-          geom_point(aes(color =  valuationType), size = 2) +
-          geom_smooth(method = "lm") +
-          geom_point(x = pred_hours, y = pred_price, size = 4, color = "Red", shape = 4) +
-          geom_point(x = pred_hours, y = comp_price, size = 4, color = "Blue", shape = 4) +
-          geom_point(x = pred_hours, y = average_price, size = 4, color = "Green", shape = 4)+
-          theme(legend.position="none")
-        
-        if (!is.na(input$valuation)){
-          valuation_y <-  input$valuation
-          p2 <- p2 + geom_point(x = pred_hours, y = valuation_y, size = 4, color = "Orange", shape = 13)
-        }
-        
-        p2
-        
-      } else {
-        ggplot()
+      p2 <- df %>%
+        ggplot(aes(x = hours, y = price)) +
+        geom_point(aes(color =  valuationType), size = 2) +
+        geom_smooth(method = "lm") +
+        geom_point(x = pred_hours, y = pred_price, size = 4, color = "Red", shape = 4) +
+        geom_point(x = pred_hours, y = comp_price, size = 4, color = "Blue", shape = 4) +
+        geom_point(x = pred_hours, y = average_price, size = 4, color = "Green", shape = 4)+
+        theme(legend.position="none")
+      
+      if (!is.na(input$valuation)){
+        valuation_y <-  input$valuation
+        p2 <- p2 + geom_point(x = pred_hours, y = valuation_y, size = 4, color = "Orange", shape = 13)
       }
+      
+      p2
+      
     })
 
     ####---- PLOT 3: Price vs Condition Index ----
@@ -347,42 +348,40 @@ function(input, output, session) {
 
       if (is.null(hot_to_r(input$HistTable))){
         return()
-      } else {
-        df <- reused_hot_to_r(input)
+      } 
+      
+      df <- reused_hot_to_r(input)
+      if (nrow(df) <= 2) {
+        return(ggplot())
       }
 
+      fit <- fit()
+      new_data <- given_details()
+      pred_year <- input$year
+      pred_price <- price_predictor(fit, new_data)
+      pred_hours <-input$hours
+      pred_condition_index <- input$condition %>%
+        factor(., levels = conditions_Defaults) %>%
+        as.numeric(.)
+      comp_price <- comp_price()
+      average_price <- average_price()
 
-      # df$condition_index <- as.numeric(df$condition)
-
-      if (nrow(df) > 2){
-        fit <- fit()
-        new_data <- given_details()
-        pred_year <- input$year
-        pred_price <- price_predictor(fit, new_data)
-        pred_hours <-input$hours
-        pred_condition_index <- input$condition %>%
-          factor(., levels = conditions_Defaults) %>%
-          as.numeric(.)
-        comp_price <- comp_price()
-        average_price <- average_price()
-
-        p3 <- df %>%
-          ggplot(aes(x = condition_index, y = price)) +
-          geom_point(aes(color =  valuationType), size = 2) +
-          geom_smooth(method = "lm") +
-          geom_point(x = pred_condition_index, y = pred_price, size = 4, color = "Red", shape = 4) +
-          geom_point(x = pred_condition_index, y = comp_price, size = 4, color = "Blue", shape = 4) +
-          geom_point(x = pred_condition_index, y = average_price, size = 4, color = "Green", shape = 4) +
-          theme(legend.position="none")
-        
-        if (!is.na(input$valuation)){
-          valuation_y <-  input$valuation
-          p3 <- p3 + geom_point(x = pred_condition_index, y = valuation_y, size = 4, color = "Orange", shape = 13)
-        }
-        
-      } else {
-        ggplot()
+      p3 <- df %>%
+        ggplot(aes(x = condition_index, y = price)) +
+        geom_point(aes(color =  valuationType), size = 2) +
+        geom_smooth(method = "lm") +
+        geom_point(x = pred_condition_index, y = pred_price, size = 4, color = "Red", shape = 4) +
+        geom_point(x = pred_condition_index, y = comp_price, size = 4, color = "Blue", shape = 4) +
+        geom_point(x = pred_condition_index, y = average_price, size = 4, color = "Green", shape = 4) +
+        theme(legend.position="none")
+      
+      if (!is.na(input$valuation)){
+        valuation_y <-  input$valuation
+        p3 <- p3 + geom_point(x = pred_condition_index, y = valuation_y, size = 4, color = "Orange", shape = 13)
       }
+        
+      p3
+
     })
 
     ##---- 7) COMPARISON TABLE & PRICE COMPUTATIONS ----
@@ -395,7 +394,7 @@ function(input, output, session) {
 
       # If both Auction and Retail data exist, create a summary table
       if (all(unique(sort(df$valuationType)) == sort(c("Auction", "Retail")))) {
-        print("Both")
+        #print("Both")
 
         compTable <- df%>%
           group_by(valuationType) %>%
@@ -409,7 +408,7 @@ function(input, output, session) {
           mutate(diff = if_else(name == "n",NA,1 - Auction/Retail))
       } else {
         # If only one type is present, create partial summary
-        print("Just One")
+        #print("Just One")
 
         compTable <- df %>%
           group_by(valuationType)  %>%
@@ -465,6 +464,9 @@ function(input, output, session) {
     })
     
     output$price_average <- renderText({
+      if (identical(average_price(), 0)) {
+        return(0)
+      }
       req(average_price())
       average_price()
     })
@@ -648,7 +650,7 @@ function(input, output, session) {
         summary_table <- NULL
         
         for (i in unit_list) {
-          print(i)
+          #print(i)
           
           
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
@@ -712,7 +714,7 @@ function(input, output, session) {
     
     #--- Observe which row is selected in summaryTable
     observeEvent(input$dt_summary_rows_selected, {
-      print(input$dt_summary_rows_selected)
+      #print(input$dt_summary_rows_selected)
       
        master_list <- vals$master_list
 
@@ -721,7 +723,7 @@ function(input, output, session) {
        summary_table <- NULL
         
        for (i in unit_list) {
-          print(i)
+          #print(i)
           
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
           
@@ -887,4 +889,45 @@ function(input, output, session) {
       vals$master_list$Equip_List[[input$unites]]$valuation <- input$valuation
       
     })
-    }
+    
+    ##---- 14) New blank Master Button ----
+    
+    # A button that is only visible when no file is loaded and no blank master has been made
+    output$master_button <- renderUI({
+      
+      #hide button if a file has been imported
+      if (!is.null(input$file1)){
+        return()
+      }
+      
+      # hide button if a master list already exists
+      if (!is.null(vals$master_list)){
+        return()
+      }
+      
+      #button
+      actionButton("new_blank_master", HTML("Make New <br>Blank dataset"))
+      
+      })
+    
+    # creates an empty list of lists with the expected format of an improted master_list.RData
+    observeEvent(input$new_blank_master, {
+      
+      vals$master_list <- list(Equip_List = list(),
+                               Market_Hist = list())
+
+    })
+    
+    ##---- 15) Save HistTable Button ----
+    
+    observeEvent(input$save_HistTable, {
+      
+      # id the currently selected model to overwrite the correct HistTable
+      model <- input$model
+      
+      # Save the current HistTable to a reactiveValues object
+      vals$master_list$Market_Hist[[model]] <- hot_to_r(input$HistTable)
+      
+    })
+    
+}

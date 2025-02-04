@@ -60,6 +60,11 @@ price_predictor <- function(fit, new_data){
   if (identical(fit, 0)) {
     return(0)
   }
+  
+  if (identical(fit, NULL)) {
+    return(0)
+  }
+
   pred_price <- predict(fit, newdata = new_data)
   return(pred_price)
 
