@@ -7,10 +7,18 @@ function(input, output, session) {
     # Store reactive values (data, etc.) across user sessions
     vals <- reactiveValues(data = NULL,
                            master_list = NULL,
-                           summary_list = NULL)
+                           summary_list = NULL,
+                           cat_names = as.character())
 
     ##---- 1) REACTIVE EXPRESSION: LOADING / PREPARING DATA ----
-
+    observeEvent(input$pause, {
+      browser()
+      
+      if (FALSE){
+        list <- vals$master_list
+      }
+    })
+    
     observeEvent(input$file1, {
       req(input$file1)
       
@@ -32,7 +40,7 @@ function(input, output, session) {
 
       })
 
-    Hist_Table <- reactive({
+    Hist_Table <- eventReactive(input$file1, {
 
       inFile <- input$file1
       unite <- input$unites
@@ -48,6 +56,7 @@ function(input, output, session) {
       } else {
 
         model <- vals$master_list$Equip_List[[unite]]$model
+        test <- vals$master_list$Market_Hist
         Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
 
         if (!"Include" %in% colnames(Dets)) {
@@ -73,6 +82,8 @@ function(input, output, session) {
         updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
         updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
         updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
+        
+        vals$cat_names <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
 
         Dets
 
@@ -122,12 +133,21 @@ function(input, output, session) {
         updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
         updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
         
+        vals$cat_names <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
+        
         Dets
         
       }
       
     })
     
+    Hist_Table <- reactive({
+      unite <- input$unites
+      model <- vals$master_list$Equip_List[[unite]]$model
+      Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
+      Dets
+    })
+
     ##---- 2) DOWNLOAD HANDLER: SAVING DATA ----
 
     output$downloadData <- downloadHandler(
@@ -196,9 +216,24 @@ function(input, output, session) {
         }
 
         # Render a checkbox group with these source choices
-        checkboxGroupInput("source_box", "Source of Auction or Retail:",
-                           choices = source_choices,
-                           selected = "Ritchie Bros")
+        
+          layout_column_wrap(
+              width = 1/2,
+            card(
+              title = "Valuation Type",
+              open = FALSE,
+              checkboxGroupInput("valuationType", "Valuation Type",
+                                 choices = c("Auction", "Retail"),
+                                 selected = c("Auction", "Retail"))
+            ),
+            card(
+              checkboxGroupInput("source_box", "Source of Auction or Retail:",
+                                 choices = source_choices,
+                                 selected = source_choices)
+              )
+            )
+          
+          
       }
 
     })
@@ -254,14 +289,14 @@ function(input, output, session) {
         ggplot(aes(x = year, y = price)) +
         geom_point(aes(color =  valuationType), size = 2) +
         geom_smooth(method = "lm") +
-        geom_point(aes(x = pred_year, y = pred_price), size = 4, color = "Red", shape = 4) +
-        geom_point(aes(x = pred_year, y = comp_price), size = 4, color = "Blue", shape = 4) +
-        geom_point(aes(x = pred_year, y = average_price), size = 4, color = "Green", shape = 4)+
+        geom_point(x = pred_year, y = pred_price, size = 4, color = "Red", shape = 4) +
+        geom_point(x = pred_year, y = comp_price, size = 4, color = "Blue", shape = 4) +
+        geom_point(x = pred_year, y = average_price, size = 4, color = "Green", shape = 4)+
         theme(legend.position="none")
       
       if (!is.na(input$valuation)){
         valuation_y <-  input$valuation
-        p <- p + geom_point(aes(x = pred_year, y = valuation_y), size = 4, color = "Orange", shape = 13)
+        p <- p + geom_point(x = pred_year, y = valuation_y, size = 4, color = "Orange", shape = 13)
       }
       
       p
@@ -290,14 +325,14 @@ function(input, output, session) {
           ggplot(aes(x = hours, y = price)) +
           geom_point(aes(color =  valuationType), size = 2) +
           geom_smooth(method = "lm") +
-          geom_point(aes(x = pred_hours, y = pred_price), size = 4, color = "Red", shape = 4) +
-          geom_point(aes(x = pred_hours, y = comp_price), size = 4, color = "Blue", shape = 4) +
-          geom_point(aes(x = pred_hours, y = average_price), size = 4, color = "Green", shape = 4)+
+          geom_point(x = pred_hours, y = pred_price, size = 4, color = "Red", shape = 4) +
+          geom_point(x = pred_hours, y = comp_price, size = 4, color = "Blue", shape = 4) +
+          geom_point(x = pred_hours, y = average_price, size = 4, color = "Green", shape = 4)+
           theme(legend.position="none")
         
         if (!is.na(input$valuation)){
           valuation_y <-  input$valuation
-          p2 <- p2 + geom_point(aes(x = pred_hours, y = valuation_y), size = 4, color = "Orange", shape = 13)
+          p2 <- p2 + geom_point(x = pred_hours, y = valuation_y, size = 4, color = "Orange", shape = 13)
         }
         
         p2
@@ -335,14 +370,14 @@ function(input, output, session) {
           ggplot(aes(x = condition_index, y = price)) +
           geom_point(aes(color =  valuationType), size = 2) +
           geom_smooth(method = "lm") +
-          geom_point(aes(x = pred_condition_index, y = pred_price), size = 4, color = "Red", shape = 4) +
-          geom_point(aes(x = pred_condition_index, y = comp_price), size = 4, color = "Blue", shape = 4) +
-          geom_point(aes(x = pred_condition_index, y = average_price), size = 4, color = "Green", shape = 4) +
+          geom_point(x = pred_condition_index, y = pred_price, size = 4, color = "Red", shape = 4) +
+          geom_point(x = pred_condition_index, y = comp_price, size = 4, color = "Blue", shape = 4) +
+          geom_point(x = pred_condition_index, y = average_price, size = 4, color = "Green", shape = 4) +
           theme(legend.position="none")
         
         if (!is.na(input$valuation)){
           valuation_y <-  input$valuation
-          p3 <- p3 + geom_point(aes(x = pred_condition_index, y = valuation_y), size = 4, color = "Orange", shape = 13)
+          p3 <- p3 + geom_point(x = pred_condition_index, y = valuation_y, size = 4, color = "Orange", shape = 13)
         }
         
       } else {
@@ -760,25 +795,24 @@ function(input, output, session) {
     
     ##---- 11) Add New Units ----
     observeEvent(input$new_unit, {
-      unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
       showModal(modalDialog(
         title = "Adding a New Unit",
         "This is an important message!",
         textInput("add_new_unites", "New Unite Number"),
         textInput("description", "Description"),
-        selectInput("categorie", "Categorie", unique_categories),
+        selectInput("categorie", "Categorie", vals$cat_names),
         selectInput("model", "Model", choices = names(vals$master_list$Market_Hist)),  # Dropdown for Models in our Hist Data
         numericInput("year", "Year", value = 0),
         numericInput("hours", "Hours", value = 0),
         selectInput("condition", "Equipment Condition",
                     choices = conditions_Defaults),
         easyClose = FALSE,
-        footer = tagList(actionButton("confirmCreate", "Create"),
+        footer = tagList(actionButton("confirmCreate_unit", "Create"),
                          modalButton("Cancel"))
       ))
     })
     
-    observeEvent(input$confirmCreate, {
+    observeEvent(input$confirmCreate_unit, {
       
       new_name <- input$add_new_unites
       new_item <- list(description = input$description,
@@ -797,34 +831,56 @@ function(input, output, session) {
       vals$master_list$Equip_List <- vals$master_list$Equip_List[sorted_names]
       
       updateSelectInput(session, "unites", choices = sorted_names)
-      
-     # browser()
-     # vals$master_list$Equip_List[[input$add_new_unites]] <- list(
-     #   description = input$description,
-     #   model = input$model,
-     #   year = input$year,
-     #   hours = input$hours,
-     #   condition = input$condition,
-     #   valuationType = NULL,
-     #   valuation = NULL
-     # )
-      
-     # new_unit_list <- names(vals$master_list$Equip_List)
-     # # Update the selectInput with the new unit
-     # updateSelectInput(session, "unites", choices = new_unit_list)
+
       removeModal()
       
     })
     
     
     ##---- 12) Add New Models ----
-    observeEvent(input$show2, {
+    observeEvent(input$new_model, {
       showModal(modalDialog(
-        title = "Important message",
-        "This is an important message!",
-        easyClose = TRUE
+        title = "Adding a New Model",
+        "Create a new empty History Table for a new Model",
+        textInput("add_new_models", "New Model"),
+        selectInput("categorie", "Categorie",
+                    choices = c(vals$cat_names, "Other")),
+        # Use a conditionalPanel to show a textInput only when "Other" is selected
+        conditionalPanel(
+          condition = "input.categorie == 'Other'",
+          textInput("other_choice", "Please specify:")
+        ),
+        easyClose = FALSE,
+        footer = tagList(actionButton("confirmCreat_emodel", "Create"),
+                         modalButton("Cancel"))
       ))
     })
+    
+    observeEvent(input$confirmCreat_emodel, {
+
+      new_model <- input$add_new_models
+      new_model_hist <- tribble(
+        ~Include, ~Description,	~Model,	~year,	~hours,	~price,	~valuationType,	~source, ~auction_year, ~condition,
+        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2012,	7500,	100000,	"Auction",	"Ritchie Bros", 2023, "Below Average",
+        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2013,	5500,	200000,	"Auction",	"Ritchie Bros", 2023, "Good/Average",
+        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2014,	2500,	300000,	"Auction",	"Ritchie Bros", 2023, "Excellent",
+        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2012,	7500,	200000,	"Retail",	"Iron Planet", 2023, "Below Average",
+        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2013,	5500,	300000,	"Retail",	"Iron Planet", 2023, "Good/Average",
+        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2014,	2500,	400000,	"Retail",	"Iron Planet", 2023, "Excellent"
+      )
+      
+      vals$master_list$Market_Hist[[new_model]] <- new_model_hist
+      
+      new_model_names <- c(names(vals$master_list$Market_Hist), new_model)
+      vals$cat_names <- c(vals$cat_names, input$other_choice)
+      
+      updateSelectInput(session, "model", choices = new_model_names)
+      updateSelectInput(session, "categorie", choices = vals$cat_names)
+      
+      removeModal()
+      
+    })
+      
     ##---- 13) Update Valuation ----
     observeEvent(input$assign_valuation, {
       

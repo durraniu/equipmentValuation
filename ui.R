@@ -13,13 +13,14 @@ sidebar <- sidebar(
       title = "File Handling",
       open = TRUE,
       fileInput('file1', 'Choose File to Load Data'),
-      downloadButton("downloadData", "Save Data")
+      downloadButton("downloadData", "Save Data"),
+      actionButton("pause", "Pause App")
     ),
     accordion_panel(
       title = "Adding New Units and Models",
       open = FALSE,
       actionButton("new_unit", "Add a New Unit"),
-      actionButton("show2", "Show2 modal dialog")
+      actionButton("new_model", "Add a New Model History")
     ),
     accordion_panel(
       title = "Equipment Details",
@@ -33,13 +34,6 @@ sidebar <- sidebar(
       numericInput("hours", "Hours", value = 0),
       selectInput("condition", "Equipment Condition",
                   choices = conditions_Defaults)
-    ),
-    accordion_panel(
-      title = "Valuation Type",
-      open = FALSE,
-      selectInput("valuationType", "Valuation Type",
-                  choices = c("Auction", "Retail"), 
-                  multiple = TRUE)
     )
   )
 )
