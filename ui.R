@@ -14,8 +14,7 @@ sidebar <- sidebar(
       open = TRUE,
       uiOutput('master_button'),
       fileInput('file1', 'Choose File to Load Data'),
-      downloadButton("downloadData", "Save Data"),
-      actionButton("pause", "Pause App")
+      downloadButton("downloadData", "Save Data")
     ),
     accordion_panel(
       title = "Adding New Units and Models",

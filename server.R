@@ -845,13 +845,6 @@ function(input, output, session) {
         title = "Adding a New Model",
         "Create a new empty History Table for a new Model",
         textInput("add_new_models", "New Model"),
-        selectInput("categorie", "Categorie",
-                    choices = c(vals$cat_names, "Other")),
-        # Use a conditionalPanel to show a textInput only when "Other" is selected
-        conditionalPanel(
-          condition = "input.categorie == 'Other'",
-          textInput("other_choice", "Please specify:")
-        ),
         easyClose = FALSE,
         footer = tagList(actionButton("confirmCreat_emodel", "Create"),
                          modalButton("Cancel"))
@@ -874,15 +867,35 @@ function(input, output, session) {
       vals$master_list$Market_Hist[[new_model]] <- new_model_hist
       
       new_model_names <- c(names(vals$master_list$Market_Hist), new_model)
-      vals$cat_names <- c(vals$cat_names, input$other_choice)
       
       updateSelectInput(session, "model", choices = new_model_names)
-      updateSelectInput(session, "categorie", choices = vals$cat_names)
       
       removeModal()
       
     })
       
+    ##---- 16) Add New Category Button ----
+    observeEvent(input$new_catagorie, {
+      showModal(modalDialog(
+        title = "Adding a Catagorie",
+        "Create a new Catagorie for the Categorie dropdown",
+        textInput("add_new_categorie", "Categorie"),
+        easyClose = FALSE,
+        footer = tagList(actionButton("confirmCreat_emodel", "Create"),
+                         modalButton("Cancel"))
+      ))
+    })
+    
+    observeEvent(input$confirmCreat_emodel, {
+      
+      vals$cat_names <- c(vals$cat_names, input$new_catagorie)
+      
+      updateSelectInput(session, "categorie", choices = vals$cat_names)
+      
+      removeModal()
+      
+    })
+    
     ##---- 13) Update Valuation ----
     observeEvent(input$assign_valuation, {
       
