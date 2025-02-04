@@ -57,8 +57,15 @@ make_variable_list <- function(df, input){
 # predicts the price using predict() from base R.
 price_predictor <- function(fit, new_data){
 
-  pred_price <- predict(fit, newdata = new_data)
+  if (identical(fit, 0)) {
+    return(0)
+  }
+  
+  if (identical(fit, NULL)) {
+    return(0)
+  }
 
+  pred_price <- predict(fit, newdata = new_data)
   return(pred_price)
 
 }
@@ -85,26 +92,31 @@ reused_hot_to_r <- function(input_data){
 
 
 #### Fit Model ----
-fit_histtable <- function(df, value_input){
-  
-  df <- df %>% 
-    filter(valuationType %in% value_input) %>%
-    filter(Include == TRUE) %>%
-    mutate(condition = factor(condition, levels = conditions_Defaults)) %>%
-    mutate(condition_index = as.numeric(condition))
-  
-  if (length(unique(df$condition)) == 1){
-    variable_list <- c("year", "hours")
-  } else {
-    variable_list <- c("year", "hours", "condition_index")
-  }
-  
-  # Construct a formula dynamically for the chosen variables
-  formula <- reformulate(termlabels = variable_list, response = 'price')
-  
-  # gives the linear fit for the variables that survived in variable_list
-  fit <- lm(formula, data = df)
-  
-  return(fit)
+fit_histtable <- function(df, value_input) {
+  tryCatch({
+    df <- df %>% 
+      filter(valuationType %in% value_input) %>%
+      filter(Include == TRUE) %>%
+      mutate(condition = factor(condition, levels = conditions_Defaults)) %>%
+      mutate(condition_index = as.numeric(condition))
+    
+    if (length(unique(df$condition)) == 1) {
+      variable_list <- c("year", "hours")
+    } else {
+      variable_list <- c("year", "hours", "condition_index")
+    }
+    
+    # Construct a formula dynamically for the chosen variables
+    formula <- reformulate(termlabels = variable_list, response = 'price')
+    
+    # Fit the linear model
+    fit <- lm(formula, data = df)
+    
+    return(fit)
+    
+  }, error = function(e) {
+    message("Error in fit_histtable: ", e$message)
+    return(0)
+  })
 }
 

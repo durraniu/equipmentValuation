@@ -3,14 +3,22 @@ library(shiny)
 
 
 function(input, output, session) {
-
-    # Store reactive values (data, etc.) across user sessions
+  
+  # Store reactive values (data, etc.) across user sessions
     vals <- reactiveValues(data = NULL,
                            master_list = NULL,
-                           summary_list = NULL)
+                           summary_list = NULL,
+                           cat_names = as.character())
 
     ##---- 1) REACTIVE EXPRESSION: LOADING / PREPARING DATA ----
-
+    observeEvent(input$pause, {
+      browser()
+      
+      if (FALSE){
+        list <- vals$master_list
+      }
+    })
+    
     observeEvent(input$file1, {
       req(input$file1)
       
@@ -32,7 +40,7 @@ function(input, output, session) {
 
       })
 
-    Hist_Table <- reactive({
+    Hist_Table <- eventReactive(input$file1, {
 
       inFile <- input$file1
       unite <- input$unites
@@ -48,8 +56,8 @@ function(input, output, session) {
       } else {
 
         model <- vals$master_list$Equip_List[[unite]]$model
+        test <- vals$master_list$Market_Hist
         Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
-        #Dets <- hot_to_r(vals$master_list$Market_Hist[[model]])
 
         if (!"Include" %in% colnames(Dets)) {
           Dets <- Dets %>% 
@@ -59,16 +67,85 @@ function(input, output, session) {
 
         # Update various input fields with loaded data
         updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
-        updateTextInput(session, "model", value = vals$master_list$Equip_List[[unite]]$model)
+        updateSelectInput(session, "model", 
+                          selected = vals$master_list$Equip_List[[unite]]$model, 
+                          choices = names(vals$master_list$Market_Hist))
+        
+        unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
+        
+        updateSelectInput(session, "categorie", 
+                          selected = vals$master_list$Equip_List[[unite]]$categorie, 
+                          choices = unique_categories)
+        
         updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
         updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
         updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
         updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
+        updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
+        
+        vals$cat_names <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
 
         Dets
 
       }
 
+    })
+
+    observeEvent(input$unites, {
+      
+      inFile <- input$file1
+      unite <- input$unites
+      
+      if (unite == ""){
+        return()
+      }
+      
+      if (is.null(inFile)){
+        
+        return(HistTable)
+        
+      } else {
+        
+        model <- vals$master_list$Equip_List[[unite]]$model
+        Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
+        
+        if (!"Include" %in% colnames(Dets)) {
+          Dets <- Dets %>% 
+            mutate(Include = NA) %>% 
+            select(Include, everything())
+        }
+        
+        # Update various input fields with loaded data
+        updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
+        updateSelectInput(session, "model", 
+                          selected = vals$master_list$Equip_List[[unite]]$model, 
+                          choices = names(vals$master_list$Market_Hist))
+        
+        unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
+        
+        updateSelectInput(session, "categorie", 
+                          selected = vals$master_list$Equip_List[[unite]]$categorie, 
+                          choices = unique_categories)
+        
+        updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
+        updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
+        updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
+        updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
+        updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
+        
+        vals$cat_names <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
+        
+        Dets
+        
+      }
+      
+    })
+    
+    Hist_Table <- reactive({
+      unite <- input$unites
+      model <- vals$master_list$Equip_List[[unite]]$model
+      Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
+      Dets
     })
 
     ##---- 2) DOWNLOAD HANDLER: SAVING DATA ----
@@ -80,7 +157,7 @@ function(input, output, session) {
         savedate <- format(Sys.time(), "%Y-%m-%d")
 
         if (!is.null(vals$master_list)) {
-          paste0(savedate," - master_list.Rdata")
+          paste0(savedate," - master_list.RData")
         } else {
           "NOT ENOUGH INFO TO SAVE.RData"
         }
@@ -139,9 +216,26 @@ function(input, output, session) {
         }
 
         # Render a checkbox group with these source choices
-        checkboxGroupInput("source_box", "Source of Auction or Retail:",
-                           choices = source_choices,
-                           selected = "Ritchie Bros")
+        
+        value_selected <- c("Auction", "Retail")
+        
+          layout_column_wrap(
+              width = 1/2,
+            card(
+              title = "Valuation Type",
+              open = FALSE,
+              checkboxGroupInput("valuationType", "Valuation Type",
+                                 choices = c("Auction", "Retail"),
+                                 if (is.null(input$source_box)) value_selected else input$valuationType)
+            ),
+            card(
+              checkboxGroupInput("source_box", "Source of Auction or Retail:",
+                                 choices = source_choices,
+                                 if (is.null(input$source_box)) source_choices else input$source_box)
+              )
+            )
+          
+          
       }
 
     })
@@ -193,45 +287,60 @@ function(input, output, session) {
       average_price <- average_price()
 
       # Base ggplot with points and a linear fit
-      df %>%
+      p <- df %>%
         ggplot(aes(x = year, y = price)) +
-        geom_point() + #aes(size = hours)) +
-        #geom_line() +
+        geom_point(aes(color =  valuationType), size = 2) +
         geom_smooth(method = "lm") +
-        geom_point(aes(x = pred_year, y = pred_price, size = pred_hours), color = "Red", shape = 4) +
-        geom_point(aes(x = pred_year, y = comp_price, size = pred_hours), color = "Blue", shape = 4) +
-        geom_point(aes(x = pred_year, y = average_price, size = pred_hours), color = "Green", shape = 4)
+        geom_point(x = pred_year, y = pred_price, size = 4, color = "Red", shape = 4) +
+        geom_point(x = pred_year, y = comp_price, size = 4, color = "Blue", shape = 4) +
+        geom_point(x = pred_year, y = average_price, size = 4, color = "Green", shape = 4)+
+        theme(legend.position="none")
+      
+      if (!is.na(input$valuation)){
+        valuation_y <-  input$valuation
+        p <- p + geom_point(x = pred_year, y = valuation_y, size = 4, color = "Orange", shape = 13)
+      }
+      
+      p
       
     })
 
     ####---- PLOT 2: Price vs Hours ----
     output$plot2 <- renderPlotly({
-
+      
       if (is.null(hot_to_r(input$HistTable))){
         return()
-      } else {
-        df <- reused_hot_to_r(input)
+      } 
+      
+      df <- reused_hot_to_r(input)
+      if (nrow(df) <= 2) {
+        return(ggplot())
       }
 
-      if (nrow(df) > 2){
-        fit <- fit()
-        new_data <- given_details()
-        pred_year <- input$year
-        pred_price <- price_predictor(fit, new_data)
-        pred_hours <-input$hours
-        comp_price <- comp_price()
-        average_price <- average_price()
+      fit <- fit()
+      new_data <- given_details()
+      pred_year <- input$year
+      pred_price <- price_predictor(fit, new_data)
+      pred_hours <-input$hours
+      comp_price <- comp_price()
+      average_price <- average_price()
 
-        df %>%
-          ggplot(aes(x = hours, y = price)) +
-          geom_point() +
-          geom_smooth(method = "lm") +
-          geom_point(aes(x = pred_hours, y = pred_price, size = pred_year), color = "Red", shape = 4) +
-          geom_point(aes(x = pred_hours, y = comp_price, size = pred_year), color = "Blue", shape = 4) +
-          geom_point(aes(x = pred_hours, y = average_price, size = pred_year), color = "Green", shape = 4)
-      } else {
-        ggplot()
+      p2 <- df %>%
+        ggplot(aes(x = hours, y = price)) +
+        geom_point(aes(color =  valuationType), size = 2) +
+        geom_smooth(method = "lm") +
+        geom_point(x = pred_hours, y = pred_price, size = 4, color = "Red", shape = 4) +
+        geom_point(x = pred_hours, y = comp_price, size = 4, color = "Blue", shape = 4) +
+        geom_point(x = pred_hours, y = average_price, size = 4, color = "Green", shape = 4)+
+        theme(legend.position="none")
+      
+      if (!is.na(input$valuation)){
+        valuation_y <-  input$valuation
+        p2 <- p2 + geom_point(x = pred_hours, y = valuation_y, size = 4, color = "Orange", shape = 13)
       }
+      
+      p2
+      
     })
 
     ####---- PLOT 3: Price vs Condition Index ----
@@ -239,35 +348,40 @@ function(input, output, session) {
 
       if (is.null(hot_to_r(input$HistTable))){
         return()
-      } else {
-        df <- reused_hot_to_r(input)
+      } 
+      
+      df <- reused_hot_to_r(input)
+      if (nrow(df) <= 2) {
+        return(ggplot())
       }
 
+      fit <- fit()
+      new_data <- given_details()
+      pred_year <- input$year
+      pred_price <- price_predictor(fit, new_data)
+      pred_hours <-input$hours
+      pred_condition_index <- input$condition %>%
+        factor(., levels = conditions_Defaults) %>%
+        as.numeric(.)
+      comp_price <- comp_price()
+      average_price <- average_price()
 
-      # df$condition_index <- as.numeric(df$condition)
-
-      if (nrow(df) > 2){
-        fit <- fit()
-        new_data <- given_details()
-        pred_year <- input$year
-        pred_price <- price_predictor(fit, new_data)
-        pred_hours <-input$hours
-        pred_condition_index <- input$condition %>%
-          factor(., levels = conditions_Defaults) %>%
-          as.numeric(.)
-        comp_price <- comp_price()
-        average_price <- average_price()
-
-        df %>%
-          ggplot(aes(x = condition_index, y = price)) +
-          geom_point() +
-          geom_smooth(method = "lm") +
-          geom_point(aes(x = pred_condition_index, y = pred_price, size = pred_year), color = "Red", shape = 4) +
-          geom_point(aes(x = pred_condition_index, y = comp_price, size = pred_year), color = "Blue", shape = 4) +
-          geom_point(aes(x = pred_condition_index, y = average_price, size = pred_year), color = "Green", shape = 4)
-      } else {
-        ggplot()
+      p3 <- df %>%
+        ggplot(aes(x = condition_index, y = price)) +
+        geom_point(aes(color =  valuationType), size = 2) +
+        geom_smooth(method = "lm") +
+        geom_point(x = pred_condition_index, y = pred_price, size = 4, color = "Red", shape = 4) +
+        geom_point(x = pred_condition_index, y = comp_price, size = 4, color = "Blue", shape = 4) +
+        geom_point(x = pred_condition_index, y = average_price, size = 4, color = "Green", shape = 4) +
+        theme(legend.position="none")
+      
+      if (!is.na(input$valuation)){
+        valuation_y <-  input$valuation
+        p3 <- p3 + geom_point(x = pred_condition_index, y = valuation_y, size = 4, color = "Orange", shape = 13)
       }
+        
+      p3
+
     })
 
     ##---- 7) COMPARISON TABLE & PRICE COMPUTATIONS ----
@@ -280,7 +394,7 @@ function(input, output, session) {
 
       # If both Auction and Retail data exist, create a summary table
       if (all(unique(sort(df$valuationType)) == sort(c("Auction", "Retail")))) {
-        print("Both")
+        #print("Both")
 
         compTable <- df%>%
           group_by(valuationType) %>%
@@ -294,7 +408,7 @@ function(input, output, session) {
           mutate(diff = if_else(name == "n",NA,1 - Auction/Retail))
       } else {
         # If only one type is present, create partial summary
-        print("Just One")
+        #print("Just One")
 
         compTable <- df %>%
           group_by(valuationType)  %>%
@@ -350,6 +464,9 @@ function(input, output, session) {
     })
     
     output$price_average <- renderText({
+      if (identical(average_price(), 0)) {
+        return(0)
+      }
       req(average_price())
       average_price()
     })
@@ -525,7 +642,6 @@ function(input, output, session) {
     output$dt_summary <- renderDT({
       
       # Build Sumamry Table
-      
       master_list <- vals$master_list
       if (!is.null(master_list)){
 
@@ -534,7 +650,8 @@ function(input, output, session) {
         summary_table <- NULL
         
         for (i in unit_list) {
-          print(i)
+          #print(i)
+          
           
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
           
@@ -550,11 +667,17 @@ function(input, output, session) {
           value_liquidation <- price_predictor(fit_liquidation, i_data)
           value_market <- price_predictor(fit_market, i_data)
           
+          if (is.null(master_list$Equip_List[[i]]$valuation)) {
+            valueation_to_use <- 0
+          } else {
+            valueation_to_use <- master_list$Equip_List[[i]]$valuation
+          }
+          
           summary_table <- rbind(summary_table, tibble(Unit = i,
                                                        categorie = master_list$Equip_List[[i]]$categorie,
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
-                                                       valuation = master_list$Equip_List[[i]]$valuation))
+                                                       valuation = valueation_to_use))
         }
         
         summary_output <- summary_table %>%
@@ -591,7 +714,7 @@ function(input, output, session) {
     
     #--- Observe which row is selected in summaryTable
     observeEvent(input$dt_summary_rows_selected, {
-      print(input$dt_summary_rows_selected)
+      #print(input$dt_summary_rows_selected)
       
        master_list <- vals$master_list
 
@@ -600,7 +723,7 @@ function(input, output, session) {
        summary_table <- NULL
         
        for (i in unit_list) {
-          print(i)
+          #print(i)
           
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
           
@@ -616,11 +739,17 @@ function(input, output, session) {
           value_liquidation <- price_predictor(fit_liquidation, i_data)
           value_market <- price_predictor(fit_market, i_data)
           
+          if (is.null(master_list$Equip_List[[i]]$valuation)) {
+            valueation_to_use <- 0
+          } else {
+            valueation_to_use <- master_list$Equip_List[[i]]$valuation
+          }
+          
           summary_table <- rbind(summary_table, tibble(Unit = i,
                                                        categorie = master_list$Equip_List[[i]]$categorie,
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
-                                                       valuation = master_list$Equip_List[[i]]$valuation))
+                                                       valuation = valueation_to_use))
         }
 
        summary_output <- summary_table %>%
@@ -666,4 +795,139 @@ function(input, output, session) {
       }
     })
     
-    }
+    ##---- 11) Add New Units ----
+    observeEvent(input$new_unit, {
+      showModal(modalDialog(
+        title = "Adding a New Unit",
+        "This is an important message!",
+        textInput("add_new_unites", "New Unite Number"),
+        textInput("description", "Description"),
+        selectInput("categorie", "Categorie", vals$cat_names),
+        selectInput("model", "Model", choices = names(vals$master_list$Market_Hist)),  # Dropdown for Models in our Hist Data
+        numericInput("year", "Year", value = 0),
+        numericInput("hours", "Hours", value = 0),
+        selectInput("condition", "Equipment Condition",
+                    choices = conditions_Defaults),
+        easyClose = FALSE,
+        footer = tagList(actionButton("confirmCreate_unit", "Create"),
+                         modalButton("Cancel"))
+      ))
+    })
+    
+    observeEvent(input$confirmCreate_unit, {
+      
+      new_name <- input$add_new_unites
+      new_item <- list(description = input$description,
+                       categorie = input$categorie,
+                       model = input$model,
+                       year = input$year,
+                       hours = input$hours,
+                       condition = input$condition,
+                       valuationType = NULL,
+                       valuation = NULL
+                       )
+      
+      vals$master_list$Equip_List[[new_name]] <- new_item
+      
+      sorted_names <- sort(names(vals$master_list$Equip_List))
+      vals$master_list$Equip_List <- vals$master_list$Equip_List[sorted_names]
+      
+      updateSelectInput(session, "unites", choices = sorted_names)
+
+      removeModal()
+      
+    })
+    
+    
+    ##---- 12) Add New Models ----
+    observeEvent(input$new_model, {
+      showModal(modalDialog(
+        title = "Adding a New Model",
+        "Create a new empty History Table for a new Model",
+        textInput("add_new_models", "New Model"),
+        selectInput("categorie", "Categorie",
+                    choices = c(vals$cat_names, "Other")),
+        # Use a conditionalPanel to show a textInput only when "Other" is selected
+        conditionalPanel(
+          condition = "input.categorie == 'Other'",
+          textInput("other_choice", "Please specify:")
+        ),
+        easyClose = FALSE,
+        footer = tagList(actionButton("confirmCreat_emodel", "Create"),
+                         modalButton("Cancel"))
+      ))
+    })
+    
+    observeEvent(input$confirmCreat_emodel, {
+
+      new_model <- input$add_new_models
+      new_model_hist <- tribble(
+        ~Include, ~Description,	~Model,	~year,	~hours,	~price,	~valuationType,	~source, ~auction_year, ~condition,
+        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2012,	7500,	100000,	"Auction",	"Ritchie Bros", 2023, "Below Average",
+        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2013,	5500,	200000,	"Auction",	"Ritchie Bros", 2023, "Good/Average",
+        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2014,	2500,	300000,	"Auction",	"Ritchie Bros", 2023, "Excellent",
+        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2012,	7500,	200000,	"Retail",	"Iron Planet", 2023, "Below Average",
+        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2013,	5500,	300000,	"Retail",	"Iron Planet", 2023, "Good/Average",
+        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2014,	2500,	400000,	"Retail",	"Iron Planet", 2023, "Excellent"
+      )
+      
+      vals$master_list$Market_Hist[[new_model]] <- new_model_hist
+      
+      new_model_names <- c(names(vals$master_list$Market_Hist), new_model)
+      vals$cat_names <- c(vals$cat_names, input$other_choice)
+      
+      updateSelectInput(session, "model", choices = new_model_names)
+      updateSelectInput(session, "categorie", choices = vals$cat_names)
+      
+      removeModal()
+      
+    })
+      
+    ##---- 13) Update Valuation ----
+    observeEvent(input$assign_valuation, {
+      
+      vals$master_list$Equip_List[[input$unites]]$valuation <- input$valuation
+      
+    })
+    
+    ##---- 14) New blank Master Button ----
+    
+    # A button that is only visible when no file is loaded and no blank master has been made
+    output$master_button <- renderUI({
+      
+      #hide button if a file has been imported
+      if (!is.null(input$file1)){
+        return()
+      }
+      
+      # hide button if a master list already exists
+      if (!is.null(vals$master_list)){
+        return()
+      }
+      
+      #button
+      actionButton("new_blank_master", HTML("Make New <br>Blank dataset"))
+      
+      })
+    
+    # creates an empty list of lists with the expected format of an improted master_list.RData
+    observeEvent(input$new_blank_master, {
+      
+      vals$master_list <- list(Equip_List = list(),
+                               Market_Hist = list())
+
+    })
+    
+    ##---- 15) Save HistTable Button ----
+    
+    observeEvent(input$save_HistTable, {
+      
+      # id the currently selected model to overwrite the correct HistTable
+      model <- input$model
+      
+      # Save the current HistTable to a reactiveValues object
+      vals$master_list$Market_Hist[[model]] <- hot_to_r(input$HistTable)
+      
+    })
+    
+}
