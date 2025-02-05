@@ -601,40 +601,36 @@ function(input, output, session) {
         Valuation = sum(valuation)
       )
 
-    # browser()
     # row index that user clicked
 
     # row_selected <- summary_output$categorie[input$dt_summary_rows_selected]
 
-    if (TRUE) {
-      # Get the category from the summary table
-      cat_selected <- summary_output$categorie[input$dt_summary_rows_selected]
+    # Get the category from the summary table
+    cat_selected <- summary_output$categorie[input$dt_summary_rows_selected]
 
-      # Filter the original raw data for that category
-      detail_data <- summary_table %>% filter(categorie == cat_selected)
+    # Filter the original raw data for that category
+    detail_data <- summary_table %>% filter(categorie == cat_selected)
 
-      # Show a modal with a second DT (or any UI) to display the detail
-      # browser()
-      showModal(
-        modalDialog(
-          title = paste("Details for category:", cat_selected),
-          renderDT({
-            datatable(
-              detail_data,
-              rownames = FALSE,
-              options = list(dom = "t", paging = FALSE)
-            ) %>%
-              formatCurrency(
-                columns = c("Liquidation", "Market", "valuation"),
-                currency = "$",
-                digits = 0,
-                mark = ","
-              )
-          }),
-          easyClose = TRUE,
-          size = "l"
-        )
+    # Show a modal with a second DT (or any UI) to display the detail
+    showModal(
+      modalDialog(
+        title = paste("Details for category:", cat_selected),
+        renderDT({
+          datatable(
+            detail_data,
+            rownames = FALSE,
+            options = list(dom = "t", paging = FALSE)
+          ) %>%
+            formatCurrency(
+              columns = c("Liquidation", "Market", "valuation"),
+              currency = "$",
+              digits = 0,
+              mark = ","
+            )
+        }),
+        easyClose = TRUE,
+        size = "l"
       )
-    }
+    )
   })
 }
