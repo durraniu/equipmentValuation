@@ -483,6 +483,16 @@ function(input, output, session) {
         AuctionAverage <- comp_Table()$Auction[4]
 
         tagList(
+          # # Introduction row, showing R-squared and relevant computed prices
+          # fluidRow(withMathJax(),
+          #          tags$h2("Formulas to Determin Prices"),
+          #          HTML(paste(paste0("Predictive Price = Best fit lm() model of Hours, ", if_else((length(unique(df$condition)) == 1), "and ModelYear \\( = ", "ModelYear and condition index \\( = "), dollar(pred_price), "\\)"),
+          #                            paste0("Comparison Retail  \\(= \\left(1 -  \\frac{AuctionAverage }{RetailAverage} \\right) * RetailMax =",
+          #                                   "\\left(1 -  \\frac{", dollar(AuctionAverage), "}{", dollar(RetailAverage), "} \\right) * ", dollar(RetailMax), " = ", dollar(comp_price), "\\)"),
+          #                            paste0("Average Price \\(= \\left( \\frac{Predictive Price + Comparison Retail}{2} \\right) = ",
+          #                                   "\\left( \\frac{", dollar(pred_price), " + ", dollar(comp_price), "}{2} \\right) = ", dollar(average_price), "\\)"),
+          #                            sep = '<br/>'))
+          #          ),
           # Two-plot layout for Price vs Year and Price vs Hours
           card(
             card_header(
@@ -545,11 +555,6 @@ function(input, output, session) {
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
                                                        valuation = master_list$Equip_List[[i]]$valuation))
-        }
-        
-       # browser()
-        if (is.null(summary_table)) {
-          return()
         }
         
         summary_output <- summary_table %>%
@@ -661,171 +666,4 @@ function(input, output, session) {
       }
     })
     
-    ##---- 11) Add New Units ----
-    observeEvent(input$new_unit, {
-      showModal(modalDialog(
-        title = "Adding a New Unit",
-        "This is an important message!",
-        textInput("add_new_unites", "New Unite Number"),
-        textInput("description", "Description"),
-        selectInput("categorie", "Categorie", vals$cat_names),
-        selectInput("model", "Model", choices = names(vals$master_list$Market_Hist)),  # Dropdown for Models in our Hist Data
-        numericInput("year", "Year", value = 0),
-        numericInput("hours", "Hours", value = 0),
-        selectInput("condition", "Equipment Condition",
-                    choices = conditions_Defaults),
-        easyClose = FALSE,
-        footer = tagList(actionButton("confirmCreate_unit", "Create"),
-                         modalButton("Cancel"))
-      ))
-    })
-    
-    observeEvent(input$confirmCreate_unit, {
-      
-      new_name <- input$add_new_unites
-      new_item <- list(description = input$description,
-                       categorie = input$categorie,
-                       model = input$model,
-                       year = input$year,
-                       hours = input$hours,
-                       condition = input$condition,
-                       valuationType = NULL,
-                       valuation = NULL
-                       )
-      
-      vals$master_list$Equip_List[[new_name]] <- new_item
-      
-      sorted_names <- sort(names(vals$master_list$Equip_List))
-      vals$master_list$Equip_List <- vals$master_list$Equip_List[sorted_names]
-      
-      updateSelectInput(session, "unites", choices = sorted_names)
-
-      removeModal()
-      
-    })
-    
-    
-    ##---- 12) Add New Models ----
-    observeEvent(input$new_model, {
-      showModal(modalDialog(
-        title = "Adding a New Model",
-        "Create a new empty History Table for a new Model",
-        textInput("add_new_models", "New Model"),
-        easyClose = FALSE,
-        footer = tagList(actionButton("confirmCreat_emodel", "Create"),
-                         modalButton("Cancel"))
-      ))
-    })
-    
-    observeEvent(input$confirmCreat_emodel, {
-
-      new_model <- input$add_new_models
-      new_model_hist <- tribble(
-        ~Include, ~Description,	~Model,	~year,	~hours,	~price,	~valuationType,	~source, ~auction_year, ~condition,
-        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2022,	7500,	100000,	"Auction",	"Ritchie Bros", 2023, "Below Average",
-        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2023,	5500,	200000,	"Auction",	"Ritchie Bros", 2023, "Good/Average",
-        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2024,	2500,	300000,	"Auction",	"Ritchie Bros", 2023, "Excellent",
-        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2022,	7500,	200000,	"Retail",	"Iron Planet", 2023, "Below Average",
-        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2023,	5500,	300000,	"Retail",	"Iron Planet", 2023, "Good/Average",
-        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2024,	2500,	400000,	"Retail",	"Iron Planet", 2023, "Excellent"
-      )
-      
-      vals$master_list$Market_Hist[[new_model]] <- new_model_hist
-      
-      new_model_names <- c(names(vals$master_list$Market_Hist), new_model)
-      
-      updateSelectInput(session, "model", choices = new_model_names)
-      
-      removeModal()
-      
-    })
-      
-    ##---- 16) Add New Category Button ----
-    observeEvent(input$new_catagorie, {
-      showModal(modalDialog(
-        title = "Adding a Catagorie",
-        "Create a new Catagorie for the Categorie dropdown",
-        textInput("add_new_categorie", "Categorie"),
-        easyClose = FALSE,
-        footer = tagList(actionButton("confirmCreat_cat", "Create"),
-                         modalButton("Cancel"))
-      ))
-    })
-    
-    observeEvent(input$confirmCreat_cat, {
-      
-      vals$cat_names <- c(vals$cat_names, input$add_new_categorie)
-
-      updateSelectInput(session, "categorie", choices = vals$cat_names)
-      
-      removeModal()
-      
-    })
-    
-    ##---- 13) Update Valuation ----
-    observeEvent(input$assign_valuation, {
-      
-      vals$master_list$Equip_List[[input$unites]]$valuation <- input$valuation
-      
-    })
-    
-    ##---- 14) New blank Master Button ----
-    
-    # A button that is only visible when no file is loaded and no blank master has been made
-    output$master_button <- renderUI({
-      
-      #hide button if a file has been imported
-      if (!is.null(input$file1)){
-        return()
-      }
-      
-      # hide button if a master list already exists
-      if (!is.null(vals$master_list)){
-        return()
-      }
-      
-      #button
-      actionButton("new_blank_master", HTML("Make New <br>Blank dataset"))
-      
-      })
-    
-    # creates an empty list of lists with the expected format of an improted master_list.RData
-    observeEvent(input$new_blank_master, {
-      
-      vals$master_list <- list(Equip_List = list(),
-                               Market_Hist = list())
-
-    })
-    
-    ##---- 15) Save HistTable Button ----
-    
-    observeEvent(input$save_HistTable, {
-      
-      # id the currently selected model to overwrite the correct HistTable
-      model <- input$model
-      
-      # Save the current HistTable to a reactiveValues object
-      vals$master_list$Market_Hist[[model]] <- hot_to_r(input$HistTable)
-      
-    })
-    
-    ##---- 16) Save Unit Details if they have been changed Button ----
-    observeEvent(input$save_details, {
-      
-      unite <- input$unites
-      
-      updated_item <- list(unite = unite,
-                           year = input$year,
-                           hours = input$hours,
-                           description = input$description,
-                           model = input$model,
-                           valuationType = input$valuationType,
-                           condition = input$condition,
-                           valuation = input$valuation,
-                           categorie = input$categorie,
-                           )
-      
-      vals$master_list$Equip_List[[unite]] <- updated_item
-      
-    })
-}
+    }

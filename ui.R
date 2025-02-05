@@ -11,20 +11,6 @@ sidebar <- sidebar(
   fileInput('file1', 'Choose File to Load Data'),
   accordion(
     accordion_panel(
-      title = "File Handling",
-      open = TRUE,
-      uiOutput('master_button'),
-      fileInput('file1', 'Choose File to Load Data'),
-      downloadButton("downloadData", "Save Data")
-    ),
-    accordion_panel(
-      title = "Adding New Units and Models",
-      open = FALSE,
-      actionButton("new_catagorie", HTML("Add a New <br>Model Catagorie")),
-      actionButton("new_model", HTML("Add a New <br>Model History")),
-      actionButton("new_unit", "Add a New Unit"),
-    ),
-    accordion_panel(
       title = "Equipment Details",
       selectInput("unites", "Unite Number", choices = NULL),    # Dropdown for units
       textInput("description", "Description"),
@@ -38,8 +24,7 @@ sidebar <- sidebar(
                   choices = c("Auction", "Retail"), 
                   multiple = TRUE),
       selectInput("condition", "Equipment Condition",
-                  choices = conditions_Defaults),
-      actionButton("save_details", HTML("Update and Save <br>Equipment Details"))
+                  choices = conditions_Defaults)
     )
   )
 )
