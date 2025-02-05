@@ -943,6 +943,14 @@ function(input, output, session) {
       
       unite <- input$unites
       
+      if (input$unites == ""){
+        return()
+      }
+      
+      if (is.null(input$valuationType)){
+        return()
+      }
+
       updated_item <- list(unite = unite,
                            year = input$year,
                            hours = input$hours,
@@ -951,7 +959,7 @@ function(input, output, session) {
                            valuationType = input$valuationType,
                            condition = input$condition,
                            valuation = input$valuation,
-                           categorie = input$categorie,
+                           categorie = input$categorie
                            )
       
       vals$master_list$Equip_List[[unite]] <- updated_item
