@@ -8,37 +8,28 @@ library(DT)
 # Sidebar -----------------------------------------------------------------
 
 sidebar <- sidebar(
+  fileInput('file1', 'Choose File to Load Data'),
   accordion(
     accordion_panel(
-      title = "File Handling",
-      open = TRUE,
-      uiOutput('master_button'),
-      fileInput('file1', 'Choose File to Load Data'),
-      downloadButton("downloadData", "Save Data")
-    ),
-    accordion_panel(
-      title = "Adding New Units and Models",
-      open = FALSE,
-      actionButton("new_catagorie", HTML("Add a New <br>Model Catagorie")),
-      actionButton("new_model", HTML("Add a New <br>Model History")),
-      actionButton("new_unit", "Add a New Unit"),
-    ),
-    accordion_panel(
       title = "Equipment Details",
-      open = FALSE,
       selectInput("unites", "Unite Number", choices = NULL),    # Dropdown for units
-      selectInput("categorie", "Categorie", choices = NULL),     # Dropdown for Categories in our Hist Data
       textInput("description", "Description"),
-      #textInput("model", "Model"),
-      selectInput("model", "Model", choices = NULL),  # Dropdown for Models in our Hist Data
+      textInput("model", "Model"),
       numericInput("year", "Year", value = 0),
-      numericInput("hours", "Hours", value = 0),
+      numericInput("hours", "Hours", value = 0)
+    ),
+    accordion_panel(
+      title = "Valuation Type & Equipment Condition",
+      selectInput("valuationType", "Valuation Type",
+                  choices = c("Auction", "Retail"), 
+                  multiple = TRUE),
       selectInput("condition", "Equipment Condition",
-                  choices = conditions_Defaults),
-      actionButton("save_details", HTML("Update and Save <br>Equipment Details"))
+                  choices = conditions_Defaults)
     )
   )
 )
+
+
 
 # Summary -----------------------------------------------------------------
 
@@ -51,17 +42,19 @@ summary_panel <- nav_panel(
 )
 
 
+
+
 # Details -----------------------------------------------------------------
 
 details_panel <- nav_panel(
   title = "Details",
   card(
-    min_height = "400px",
+    min_height = "200px",
     card_header(
       tags$h2("Price Comparison")
     ),
     layout_column_wrap(
-      width = 1/2,
+      width = 1/3,
       value_box(
         "Predictive Price",
         textOutput("price_pred")
@@ -73,11 +66,6 @@ details_panel <- nav_panel(
       value_box(
         "Average Price",
         textOutput("price_average")
-      ),
-      value_box(
-        "Assigned Valuation",
-        numericInput("valuation", label = NULL, value = NULL),
-        actionButton("assign_valuation", "Assign Valuation")
       )
     )
   ),
@@ -86,9 +74,8 @@ details_panel <- nav_panel(
     uiOutput("dynamicCheckbox"),      # Dynamic checkbox (server-side)
     accordion(
       accordion_panel(
-        title = "History Table",
+        title = "Table",
         tags$div(
-          actionButton("save_HistTable", "Save Changes to History Table"),
           rHandsontableOutput("HistTable")
         )
       )
@@ -97,6 +84,11 @@ details_panel <- nav_panel(
   )
 )
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 1579a10d34e76f87529ed35462780e537cc96f50
 # Main UI -----------------------------------------------------------------
 
 page_navbar(
