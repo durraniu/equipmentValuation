@@ -600,16 +600,6 @@ function(input, output, session) {
         AuctionAverage <- comp_Table()$Auction[4]
 
         tagList(
-          # # Introduction row, showing R-squared and relevant computed prices
-          # fluidRow(withMathJax(),
-          #          tags$h2("Formulas to Determin Prices"),
-          #          HTML(paste(paste0("Predictive Price = Best fit lm() model of Hours, ", if_else((length(unique(df$condition)) == 1), "and ModelYear \\( = ", "ModelYear and condition index \\( = "), dollar(pred_price), "\\)"),
-          #                            paste0("Comparison Retail  \\(= \\left(1 -  \\frac{AuctionAverage }{RetailAverage} \\right) * RetailMax =",
-          #                                   "\\left(1 -  \\frac{", dollar(AuctionAverage), "}{", dollar(RetailAverage), "} \\right) * ", dollar(RetailMax), " = ", dollar(comp_price), "\\)"),
-          #                            paste0("Average Price \\(= \\left( \\frac{Predictive Price + Comparison Retail}{2} \\right) = ",
-          #                                   "\\left( \\frac{", dollar(pred_price), " + ", dollar(comp_price), "}{2} \\right) = ", dollar(average_price), "\\)"),
-          #                            sep = '<br/>'))
-          #          ),
           # Two-plot layout for Price vs Year and Price vs Hours
           card(
             card_header(
@@ -678,6 +668,11 @@ function(input, output, session) {
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
                                                        valuation = valueation_to_use))
+        }
+        
+       # browser()
+        if (is.null(summary_table)) {
+          return()
         }
         
         summary_output <- summary_table %>%
@@ -856,12 +851,12 @@ function(input, output, session) {
       new_model <- input$add_new_models
       new_model_hist <- tribble(
         ~Include, ~Description,	~Model,	~year,	~hours,	~price,	~valuationType,	~source, ~auction_year, ~condition,
-        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2012,	7500,	100000,	"Auction",	"Ritchie Bros", 2023, "Below Average",
-        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2013,	5500,	200000,	"Auction",	"Ritchie Bros", 2023, "Good/Average",
-        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2014,	2500,	300000,	"Auction",	"Ritchie Bros", 2023, "Excellent",
-        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2012,	7500,	200000,	"Retail",	"Iron Planet", 2023, "Below Average",
-        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2013,	5500,	300000,	"Retail",	"Iron Planet", 2023, "Good/Average",
-        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2014,	2500,	400000,	"Retail",	"Iron Planet", 2023, "Excellent"
+        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2022,	7500,	100000,	"Auction",	"Ritchie Bros", 2023, "Below Average",
+        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2023,	5500,	200000,	"Auction",	"Ritchie Bros", 2023, "Good/Average",
+        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2024,	2500,	300000,	"Auction",	"Ritchie Bros", 2023, "Excellent",
+        TRUE, paste0("Example: 2022 ", input$add_new_models),	input$add_new_models,	2022,	7500,	200000,	"Retail",	"Iron Planet", 2023, "Below Average",
+        TRUE, paste0("Example: 2023 ", input$add_new_models),	input$add_new_models,	2023,	5500,	300000,	"Retail",	"Iron Planet", 2023, "Good/Average",
+        TRUE, paste0("Example: 2024 ", input$add_new_models),	input$add_new_models,	2024,	2500,	400000,	"Retail",	"Iron Planet", 2023, "Excellent"
       )
       
       vals$master_list$Market_Hist[[new_model]] <- new_model_hist
@@ -881,15 +876,15 @@ function(input, output, session) {
         "Create a new Catagorie for the Categorie dropdown",
         textInput("add_new_categorie", "Categorie"),
         easyClose = FALSE,
-        footer = tagList(actionButton("confirmCreat_emodel", "Create"),
+        footer = tagList(actionButton("confirmCreat_cat", "Create"),
                          modalButton("Cancel"))
       ))
     })
     
-    observeEvent(input$confirmCreat_emodel, {
+    observeEvent(input$confirmCreat_cat, {
       
-      vals$cat_names <- c(vals$cat_names, input$new_catagorie)
-      
+      vals$cat_names <- c(vals$cat_names, input$add_new_categorie)
+
       updateSelectInput(session, "categorie", choices = vals$cat_names)
       
       removeModal()
@@ -943,4 +938,23 @@ function(input, output, session) {
       
     })
     
+    ##---- 16) Save Unit Details if they have been changed Button ----
+    observeEvent(input$save_details, {
+      
+      unite <- input$unites
+      
+      updated_item <- list(unite = unite,
+                           year = input$year,
+                           hours = input$hours,
+                           description = input$description,
+                           model = input$model,
+                           valuationType = input$valuationType,
+                           condition = input$condition,
+                           valuation = input$valuation,
+                           categorie = input$categorie,
+                           )
+      
+      vals$master_list$Equip_List[[unite]] <- updated_item
+      
+    })
 }

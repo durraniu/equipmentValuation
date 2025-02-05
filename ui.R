@@ -34,7 +34,8 @@ sidebar <- sidebar(
       numericInput("year", "Year", value = 0),
       numericInput("hours", "Hours", value = 0),
       selectInput("condition", "Equipment Condition",
-                  choices = conditions_Defaults)
+                  choices = conditions_Defaults),
+      actionButton("save_details", HTML("Update and Save <br>Equipment Details"))
     )
   )
 )
