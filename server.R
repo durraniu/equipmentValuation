@@ -3,14 +3,14 @@ library(shiny)
 
 
 function(input, output, session) {
-  
+
   # Store reactive values (data, etc.) across user sessions
     vals <- reactiveValues(data = NULL,
                            master_list = NULL,
                            summary_list = NULL,
                            cat_names = as.character())
 
-    ##---- 1) REACTIVE EXPRESSION: LOADING / PREPARING DATA ----
+   ##---- 1) REACTIVE EXPRESSION: LOADING / PREPARING DATA ----
     observeEvent(input$pause, {
       browser()
       
@@ -198,8 +198,8 @@ function(input, output, session) {
       }
 
     })
-
-    ##---- 4) DYNAMIC CHECKBOX INPUT FOR SOURCES ----
+                                        
+##---- 4) DYNAMIC CHECKBOX INPUT FOR SOURCES ----
 
     # Creates a UI element for the user to select the source of Auction or Retail
     output$dynamicCheckbox <- renderUI({
@@ -240,7 +240,7 @@ function(input, output, session) {
 
     })
 
-    ##---- 5) FITTING A MODEL & DATA ANALYSIS REACTIVES ----
+   ##---- 5) FITTING A MODEL & DATA ANALYSIS REACTIVES ----
 
     # 'fit' reactive: builds a linear model based on the available data
     fit <- reactive({
@@ -542,7 +542,7 @@ function(input, output, session) {
 
     })
 
-    output$averagePrice <- renderText({
+   output$averagePrice <- renderText({
 
 
       if (is.null(hot_to_r(input$HistTable))){
@@ -627,7 +627,7 @@ function(input, output, session) {
 
     })
 
-    ##---- 10) Summary Page ----
+##---- 10) Summary Page ----
     
     output$dt_summary <- renderDT({
       
@@ -640,9 +640,7 @@ function(input, output, session) {
         summary_table <- NULL
         
         for (i in unit_list) {
-          #print(i)
-          
-          
+
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
           
           fit_liquidation <- fit_histtable(market_data, "Auction")
@@ -670,7 +668,6 @@ function(input, output, session) {
                                                        valuation = valueation_to_use))
         }
         
-       # browser()
         if (is.null(summary_table)) {
           return()
         }
@@ -702,8 +699,6 @@ function(input, output, session) {
             mark = ","        # Thousands separator
           )
       }
-      
-
       
     })
     
@@ -752,10 +747,7 @@ function(input, output, session) {
          summarize(Liquidation = sum(Liquidation),
                    Market = sum(Market),
                    Valuation = sum(valuation))
-      
-      #browser()
-      # row index that user clicked
-      
+
       #row_selected <- summary_output$categorie[input$dt_summary_rows_selected]
       
       if(TRUE) {
@@ -790,7 +782,7 @@ function(input, output, session) {
       }
     })
     
-    ##---- 11) Add New Units ----
+##---- 11) Add New Units ----
     observeEvent(input$new_unit, {
       showModal(modalDialog(
         title = "Adding a New Unit",
