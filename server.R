@@ -3,22 +3,14 @@ library(shiny)
 
 
 function(input, output, session) {
-  
-  # Store reactive values (data, etc.) across user sessions
+
+    # Store reactive values (data, etc.) across user sessions
     vals <- reactiveValues(data = NULL,
                            master_list = NULL,
-                           summary_list = NULL,
-                           cat_names = as.character())
+                           summary_list = NULL)
 
     ##---- 1) REACTIVE EXPRESSION: LOADING / PREPARING DATA ----
-    observeEvent(input$pause, {
-      browser()
-      
-      if (FALSE){
-        list <- vals$master_list
-      }
-    })
-    
+
     observeEvent(input$file1, {
       req(input$file1)
       
@@ -40,112 +32,43 @@ function(input, output, session) {
 
       })
 
-    Hist_Table <- eventReactive(input$file1, {
-
-      inFile <- input$file1
-      unite <- input$unites
-
-      if (unite == ""){
-        return()
-      }
-
-      if (is.null(inFile)){
-
-        return(HistTable)
-
-      } else {
-
-        model <- vals$master_list$Equip_List[[unite]]$model
-        test <- vals$master_list$Market_Hist
-        Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
-
-        if (!"Include" %in% colnames(Dets)) {
-          Dets <- Dets %>% 
-            mutate(Include = NA) %>% 
-            select(Include, everything())
-        }
-
-        # Update various input fields with loaded data
-        updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
-        updateSelectInput(session, "model", 
-                          selected = vals$master_list$Equip_List[[unite]]$model, 
-                          choices = names(vals$master_list$Market_Hist))
-        
-        unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
-        
-        updateSelectInput(session, "categorie", 
-                          selected = vals$master_list$Equip_List[[unite]]$categorie, 
-                          choices = unique_categories)
-        
-        updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
-        updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
-        updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
-        updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
-        updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
-        
-        vals$cat_names <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
-
-        Dets
-
-      }
-
-    })
-
-    observeEvent(input$unites, {
-      
-      inFile <- input$file1
-      unite <- input$unites
-      
-      if (unite == ""){
-        return()
-      }
-      
-      if (is.null(inFile)){
-        
-        return(HistTable)
-        
-      } else {
-        
-        model <- vals$master_list$Equip_List[[unite]]$model
-        Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
-        
-        if (!"Include" %in% colnames(Dets)) {
-          Dets <- Dets %>% 
-            mutate(Include = NA) %>% 
-            select(Include, everything())
-        }
-        
-        # Update various input fields with loaded data
-        updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
-        updateSelectInput(session, "model", 
-                          selected = vals$master_list$Equip_List[[unite]]$model, 
-                          choices = names(vals$master_list$Market_Hist))
-        
-        unique_categories <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
-        
-        updateSelectInput(session, "categorie", 
-                          selected = vals$master_list$Equip_List[[unite]]$categorie, 
-                          choices = unique_categories)
-        
-        updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
-        updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
-        updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
-        updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
-        updateSelectInput(session, "valuation", selected = vals$master_list$Equip_List[[unite]]$valuation)
-        
-        vals$cat_names <- unique(unlist(lapply(vals$master_list$Equip_List, function(item) item$categorie)))
-        
-        Dets
-        
-      }
-      
-    })
-    
     Hist_Table <- reactive({
+
+      inFile <- input$file1
       unite <- input$unites
-      model <- vals$master_list$Equip_List[[unite]]$model
-      Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
-      Dets
+
+      if (unite == ""){
+        return()
+      }
+
+      if (is.null(inFile)){
+
+        return(HistTable)
+
+      } else {
+
+        model <- vals$master_list$Equip_List[[unite]]$model
+        Dets <- as_tibble(vals$master_list$Market_Hist[[model]])
+        #Dets <- hot_to_r(vals$master_list$Market_Hist[[model]])
+
+        if (!"Include" %in% colnames(Dets)) {
+          Dets <- Dets %>% 
+            mutate(Include = NA) %>% 
+            select(Include, everything())
+        }
+
+        # Update various input fields with loaded data
+        updateTextInput(session, "description", value = vals$master_list$Equip_List[[unite]]$description)
+        updateTextInput(session, "model", value = vals$master_list$Equip_List[[unite]]$model)
+        updateNumericInput(session, "year", value = vals$master_list$Equip_List[[unite]]$year)
+        updateNumericInput(session, "hours", value = vals$master_list$Equip_List[[unite]]$hours)
+        updateSelectInput(session, "valuationType", selected = vals$master_list$Equip_List[[unite]]$valuationType)
+        updateSelectInput(session, "condition", selected = vals$master_list$Equip_List[[unite]]$condition)
+
+        Dets
+
+      }
+
     })
 
     ##---- 2) DOWNLOAD HANDLER: SAVING DATA ----
@@ -157,7 +80,7 @@ function(input, output, session) {
         savedate <- format(Sys.time(), "%Y-%m-%d")
 
         if (!is.null(vals$master_list)) {
-          paste0(savedate," - master_list.RData")
+          paste0(savedate," - master_list.Rdata")
         } else {
           "NOT ENOUGH INFO TO SAVE.RData"
         }
@@ -216,26 +139,9 @@ function(input, output, session) {
         }
 
         # Render a checkbox group with these source choices
-        
-        value_selected <- c("Auction", "Retail")
-        
-          layout_column_wrap(
-              width = 1/2,
-            card(
-              title = "Valuation Type",
-              open = FALSE,
-              checkboxGroupInput("valuationType", "Valuation Type",
-                                 choices = c("Auction", "Retail"),
-                                 if (is.null(input$source_box)) value_selected else input$valuationType)
-            ),
-            card(
-              checkboxGroupInput("source_box", "Source of Auction or Retail:",
-                                 choices = source_choices,
-                                 if (is.null(input$source_box)) source_choices else input$source_box)
-              )
-            )
-          
-          
+        checkboxGroupInput("source_box", "Source of Auction or Retail:",
+                           choices = source_choices,
+                           selected = "Ritchie Bros")
       }
 
     })
@@ -287,60 +193,45 @@ function(input, output, session) {
       average_price <- average_price()
 
       # Base ggplot with points and a linear fit
-      p <- df %>%
+      df %>%
         ggplot(aes(x = year, y = price)) +
-        geom_point(aes(color =  valuationType), size = 2) +
+        geom_point() + #aes(size = hours)) +
+        #geom_line() +
         geom_smooth(method = "lm") +
-        geom_point(x = pred_year, y = pred_price, size = 4, color = "Red", shape = 4) +
-        geom_point(x = pred_year, y = comp_price, size = 4, color = "Blue", shape = 4) +
-        geom_point(x = pred_year, y = average_price, size = 4, color = "Green", shape = 4)+
-        theme(legend.position="none")
-      
-      if (!is.na(input$valuation)){
-        valuation_y <-  input$valuation
-        p <- p + geom_point(x = pred_year, y = valuation_y, size = 4, color = "Orange", shape = 13)
-      }
-      
-      p
+        geom_point(aes(x = pred_year, y = pred_price, size = pred_hours), color = "Red", shape = 4) +
+        geom_point(aes(x = pred_year, y = comp_price, size = pred_hours), color = "Blue", shape = 4) +
+        geom_point(aes(x = pred_year, y = average_price, size = pred_hours), color = "Green", shape = 4)
       
     })
 
     ####---- PLOT 2: Price vs Hours ----
     output$plot2 <- renderPlotly({
-      
+
       if (is.null(hot_to_r(input$HistTable))){
         return()
-      } 
-      
-      df <- reused_hot_to_r(input)
-      if (nrow(df) <= 2) {
-        return(ggplot())
+      } else {
+        df <- reused_hot_to_r(input)
       }
 
-      fit <- fit()
-      new_data <- given_details()
-      pred_year <- input$year
-      pred_price <- price_predictor(fit, new_data)
-      pred_hours <-input$hours
-      comp_price <- comp_price()
-      average_price <- average_price()
+      if (nrow(df) > 2){
+        fit <- fit()
+        new_data <- given_details()
+        pred_year <- input$year
+        pred_price <- price_predictor(fit, new_data)
+        pred_hours <-input$hours
+        comp_price <- comp_price()
+        average_price <- average_price()
 
-      p2 <- df %>%
-        ggplot(aes(x = hours, y = price)) +
-        geom_point(aes(color =  valuationType), size = 2) +
-        geom_smooth(method = "lm") +
-        geom_point(x = pred_hours, y = pred_price, size = 4, color = "Red", shape = 4) +
-        geom_point(x = pred_hours, y = comp_price, size = 4, color = "Blue", shape = 4) +
-        geom_point(x = pred_hours, y = average_price, size = 4, color = "Green", shape = 4)+
-        theme(legend.position="none")
-      
-      if (!is.na(input$valuation)){
-        valuation_y <-  input$valuation
-        p2 <- p2 + geom_point(x = pred_hours, y = valuation_y, size = 4, color = "Orange", shape = 13)
+        df %>%
+          ggplot(aes(x = hours, y = price)) +
+          geom_point() +
+          geom_smooth(method = "lm") +
+          geom_point(aes(x = pred_hours, y = pred_price, size = pred_year), color = "Red", shape = 4) +
+          geom_point(aes(x = pred_hours, y = comp_price, size = pred_year), color = "Blue", shape = 4) +
+          geom_point(aes(x = pred_hours, y = average_price, size = pred_year), color = "Green", shape = 4)
+      } else {
+        ggplot()
       }
-      
-      p2
-      
     })
 
     ####---- PLOT 3: Price vs Condition Index ----
@@ -348,40 +239,35 @@ function(input, output, session) {
 
       if (is.null(hot_to_r(input$HistTable))){
         return()
-      } 
-      
-      df <- reused_hot_to_r(input)
-      if (nrow(df) <= 2) {
-        return(ggplot())
+      } else {
+        df <- reused_hot_to_r(input)
       }
 
-      fit <- fit()
-      new_data <- given_details()
-      pred_year <- input$year
-      pred_price <- price_predictor(fit, new_data)
-      pred_hours <-input$hours
-      pred_condition_index <- input$condition %>%
-        factor(., levels = conditions_Defaults) %>%
-        as.numeric(.)
-      comp_price <- comp_price()
-      average_price <- average_price()
 
-      p3 <- df %>%
-        ggplot(aes(x = condition_index, y = price)) +
-        geom_point(aes(color =  valuationType), size = 2) +
-        geom_smooth(method = "lm") +
-        geom_point(x = pred_condition_index, y = pred_price, size = 4, color = "Red", shape = 4) +
-        geom_point(x = pred_condition_index, y = comp_price, size = 4, color = "Blue", shape = 4) +
-        geom_point(x = pred_condition_index, y = average_price, size = 4, color = "Green", shape = 4) +
-        theme(legend.position="none")
-      
-      if (!is.na(input$valuation)){
-        valuation_y <-  input$valuation
-        p3 <- p3 + geom_point(x = pred_condition_index, y = valuation_y, size = 4, color = "Orange", shape = 13)
+      # df$condition_index <- as.numeric(df$condition)
+
+      if (nrow(df) > 2){
+        fit <- fit()
+        new_data <- given_details()
+        pred_year <- input$year
+        pred_price <- price_predictor(fit, new_data)
+        pred_hours <-input$hours
+        pred_condition_index <- input$condition %>%
+          factor(., levels = conditions_Defaults) %>%
+          as.numeric(.)
+        comp_price <- comp_price()
+        average_price <- average_price()
+
+        df %>%
+          ggplot(aes(x = condition_index, y = price)) +
+          geom_point() +
+          geom_smooth(method = "lm") +
+          geom_point(aes(x = pred_condition_index, y = pred_price, size = pred_year), color = "Red", shape = 4) +
+          geom_point(aes(x = pred_condition_index, y = comp_price, size = pred_year), color = "Blue", shape = 4) +
+          geom_point(aes(x = pred_condition_index, y = average_price, size = pred_year), color = "Green", shape = 4)
+      } else {
+        ggplot()
       }
-        
-      p3
-
     })
 
     ##---- 7) COMPARISON TABLE & PRICE COMPUTATIONS ----
@@ -394,7 +280,7 @@ function(input, output, session) {
 
       # If both Auction and Retail data exist, create a summary table
       if (all(unique(sort(df$valuationType)) == sort(c("Auction", "Retail")))) {
-        #print("Both")
+        print("Both")
 
         compTable <- df%>%
           group_by(valuationType) %>%
@@ -408,7 +294,7 @@ function(input, output, session) {
           mutate(diff = if_else(name == "n",NA,1 - Auction/Retail))
       } else {
         # If only one type is present, create partial summary
-        #print("Just One")
+        print("Just One")
 
         compTable <- df %>%
           group_by(valuationType)  %>%
@@ -464,9 +350,6 @@ function(input, output, session) {
     })
     
     output$price_average <- renderText({
-      if (identical(average_price(), 0)) {
-        return(0)
-      }
       req(average_price())
       average_price()
     })
@@ -632,6 +515,7 @@ function(input, output, session) {
     output$dt_summary <- renderDT({
       
       # Build Sumamry Table
+      
       master_list <- vals$master_list
       if (!is.null(master_list)){
 
@@ -640,8 +524,7 @@ function(input, output, session) {
         summary_table <- NULL
         
         for (i in unit_list) {
-          #print(i)
-          
+          print(i)
           
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
           
@@ -657,17 +540,11 @@ function(input, output, session) {
           value_liquidation <- price_predictor(fit_liquidation, i_data)
           value_market <- price_predictor(fit_market, i_data)
           
-          if (is.null(master_list$Equip_List[[i]]$valuation)) {
-            valueation_to_use <- 0
-          } else {
-            valueation_to_use <- master_list$Equip_List[[i]]$valuation
-          }
-          
           summary_table <- rbind(summary_table, tibble(Unit = i,
                                                        categorie = master_list$Equip_List[[i]]$categorie,
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
-                                                       valuation = valueation_to_use))
+                                                       valuation = master_list$Equip_List[[i]]$valuation))
         }
         
        # browser()
@@ -709,7 +586,7 @@ function(input, output, session) {
     
     #--- Observe which row is selected in summaryTable
     observeEvent(input$dt_summary_rows_selected, {
-      #print(input$dt_summary_rows_selected)
+      print(input$dt_summary_rows_selected)
       
        master_list <- vals$master_list
 
@@ -718,7 +595,7 @@ function(input, output, session) {
        summary_table <- NULL
         
        for (i in unit_list) {
-          #print(i)
+          print(i)
           
           market_data <- master_list$Market_Hist[[master_list$Equip_List[[i]]$model]]
           
@@ -734,17 +611,11 @@ function(input, output, session) {
           value_liquidation <- price_predictor(fit_liquidation, i_data)
           value_market <- price_predictor(fit_market, i_data)
           
-          if (is.null(master_list$Equip_List[[i]]$valuation)) {
-            valueation_to_use <- 0
-          } else {
-            valueation_to_use <- master_list$Equip_List[[i]]$valuation
-          }
-          
           summary_table <- rbind(summary_table, tibble(Unit = i,
                                                        categorie = master_list$Equip_List[[i]]$categorie,
                                                        Liquidation = value_liquidation,
                                                        Market = value_market,
-                                                       valuation = valueation_to_use))
+                                                       valuation = master_list$Equip_List[[i]]$valuation))
         }
 
        summary_output <- summary_table %>%
